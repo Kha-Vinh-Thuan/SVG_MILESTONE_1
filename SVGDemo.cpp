@@ -1992,7 +1992,7 @@ string GetClassName(Shape* element)
     }
 }
 
-VOID OnPaint(HDC hdc, float zoomScale)
+VOID OnPaint(HDC hdc)
 {
     Graphics graphics(hdc);
     ZoomGraphics(graphics, zoomScale);
@@ -2110,7 +2110,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
     xml_document<> doc;
     xml_node<>* rootNode;
 
-    ifstream file("svg-17.svg");
+    ifstream file("sample.svg");
     vector<char> buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
     buffer.push_back('\0');
 
