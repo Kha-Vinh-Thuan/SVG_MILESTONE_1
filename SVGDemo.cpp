@@ -1156,7 +1156,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
 
     else if (nodeName == "text")
     {
-
         float x = node.attribute("x").as_float();
         float y = node.attribute("y").as_float();
         float dx = node.attribute("dx").as_float();
@@ -1279,7 +1278,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             }
         }
 
-
         //TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
@@ -1292,7 +1290,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
     else if (nodeName == "polygon")
     {
         string points = node.attribute("points").value();
-
         RGB fillRGB, strokeRGB;
         smatch matches;
 
@@ -1447,8 +1444,10 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(path);
     }
 
-    else if (nodeName == "g") {
-        if (isParsingGroup) {
+    else if (nodeName == "g") 
+    {
+        if (isParsingGroup) 
+        {
             return;
         }
         isParsingGroup = true;
@@ -1512,7 +1511,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         Group* group = new Group(groupElements, strokeOpacity, fillOpacity, strokeRGB, fillRGB, strokeWidth, transform, fontSize);
         elements.push_back(group);
     }
-
 }
 
 void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
@@ -1572,8 +1570,8 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 elements.push_back(circle);
             }
 
-            else if (elementName == "rect") {
-
+            else if (elementName == "rect") 
+            {
                 float x = elementNode.attribute("x").as_float();
                 float y = elementNode.attribute("y").as_float();
                 float width = elementNode.attribute("width").as_float();
@@ -1651,7 +1649,6 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
 
             else if (elementName == "text")
             {
-
                 float x = elementNode.attribute("x").as_float();
                 float y = elementNode.attribute("y").as_float();
                 float dx = elementNode.attribute("dx").as_float();
@@ -1870,7 +1867,6 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
                     ? 1 : elementNode.attribute("stroke-width").as_float();
 
-
                 //TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
@@ -1976,7 +1972,6 @@ string GetClassName(SVGElement* element)
     {
         return "Ellipse";
     }
-
 }
 
 VOID OnPaint(HDC hdc, float zoomScale)
@@ -2032,7 +2027,59 @@ VOID OnPaint(HDC hdc, float zoomScale)
     graphics.ResetTransform();
 }
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+int lastMouseX = 0;
+int lastMouseY = 0;
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    HDC          hdc;
+    PAINTSTRUCT  ps;
+
+    switch (message) {
+    case WM_PAINT:
+        hdc = BeginPaint(hWnd, &ps);
+        OnPaint(hdc);
+        EndPaint(hWnd, &ps);
+        return 0;
+    case WM_MOUSEWHEEL:
+    {
+        short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+        if (delta > 0)
+            zoomScale += 0.1f;
+        else
+            zoomScale -= 0.1f;
+
+        if (zoomScale < 0.1f)
+            zoomScale = 0.1f;
+
+
+        InvalidateRect(hWnd, NULL, TRUE);
+        return 0;
+    }
+    case WM_MOUSEMOVE: {
+        if (wParam & MK_LBUTTON) {
+            int mouseX = GET_X_LPARAM(lParam);
+            int mouseY = GET_Y_LPARAM(lParam);
+
+            float deltaX = static_cast<float>(mouseX - lastMouseX);
+            float deltaY = static_cast<float>(mouseY - lastMouseY);
+
+            offsetX += deltaX;
+            offsetY += deltaY;
+
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+        lastMouseX = GET_X_LPARAM(lParam);
+        lastMouseY = GET_Y_LPARAM(lParam);
+        return 0;
+    }
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+} // WndProc
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
 {
@@ -2042,14 +2089,13 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR           gdiplusToken;
 
-    // Read XML
     xml_document<> doc;
     xml_node<>* rootNode;
-    // Read the xml file into a vector
-    ifstream file("sample.svg");
+
+    ifstream file("svg-17.svg");
     vector<char> buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
     buffer.push_back('\0');
-    // Parse the buffer using the xml file parsing library into doc 
+
     doc.parse<0>(&buffer[0]);
 
     rootNode = doc.first_node();
@@ -2061,16 +2107,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
         char* attributeName = firstAttribute->name();
         char* attributeValue = firstAttribute->value();
         xml_attribute<>* secondAttribute = firstAttribute->next_attribute();
-        // Set breakpoint here to view value
-        // Ref: http://rapidxml.sourceforge.net/manual.html
         node = node->next_sibling();
     }
 
-
-
-    // Initialize GDI+.
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
     wndClass.style = CS_HREDRAW | CS_VREDRAW;
     wndClass.lpfnWndProc = WndProc;
     wndClass.cbClsExtra = 0;
@@ -2083,7 +2123,6 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
     wndClass.lpszClassName = TEXT("GettingStarted");
 
     RegisterClass(&wndClass);
-
     hWnd = CreateWindow(
         TEXT("GettingStarted"),   // window class name
         TEXT("SVG Demo"),  // window caption
@@ -2100,48 +2139,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
     ShowWindow(hWnd, iCmdShow);
     UpdateWindow(hWnd);
 
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
+    while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
     GdiplusShutdown(gdiplusToken);
     return msg.wParam;
 }  // WinMain
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    HDC          hdc;
-    PAINTSTRUCT  ps;
-    //static float zoomScale = 1.0f;
-
-    switch (message)
-    {
-    case WM_PAINT:
-        hdc = BeginPaint(hWnd, &ps);
-        OnPaint(hdc, zoomScale);
-        EndPaint(hWnd, &ps);
-        return 0;
-    case WM_MOUSEWHEEL:
-    {
-        short delta = GET_WHEEL_DELTA_WPARAM(wParam);
-        if (delta > 0)
-            zoomScale += 0.1f;
-        else
-            zoomScale -= 0.1f;
-
-        if (zoomScale < 0.1f)
-            zoomScale = 0.1f;
-
-        InvalidateRect(hWnd, NULL, TRUE);
-        return 0;
-    }
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-} // WndProc
