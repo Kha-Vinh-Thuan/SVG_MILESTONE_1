@@ -54,6 +54,127 @@ struct Path
     vector <char> type;
 };
 
+string chuanhoa(string input) {
+    for (int i = 0; i < input.length(); i++) {
+        if (input[i] == ',') {
+            input[i] = ' ';
+        }
+    }
+    istringstream iss(input);
+    ostringstream oss;
+    string word;
+    bool first = true;
+
+    while (iss >> word) {
+
+        if (!first) {
+            oss << " ";
+        }
+        oss << word;
+        first = false;
+    }
+    return oss.str();
+}
+
+void getNextNumberOfValues(string& s, int& i, int num, Path& path, char curType) {
+    int count = 0;
+    for (int j = 0; j < num; ++j) {
+        if (isdigit(s[i]) || s[i] == '-' || s[i] == '.' || s[i] == ' ') {
+            size_t next_pos;
+            double num = stod(s.substr(i), &next_pos);
+            path.value.push_back(num);
+            i += next_pos;
+        }
+    }
+    path.type.push_back(curType);
+}
+
+void convertPathToValue(string s, Path& path) {
+
+    char currentCommand = '\0';
+    path.type.clear();
+    path.value.clear();
+
+    bool passM = false;
+    s = chuanhoa(s);
+    int i = 0;
+    while (i < s.length()) {
+        if (isalpha(s[i])) {
+
+            currentCommand = s[i];
+            if (currentCommand == 'M' || currentCommand == 'm' && !passM)
+                passM = true;
+            i++;
+
+            switch (currentCommand) {
+            case 'M':
+            case 'm':
+                getNextNumberOfValues(s, i, 2, path, currentCommand);
+                break;
+            case 'L':
+            case 'l':
+                getNextNumberOfValues(s, i, 2, path, currentCommand);
+                break;
+            case 'H':
+            case 'h':
+            case 'V':
+            case 'v':
+                getNextNumberOfValues(s, i, 1, path, currentCommand);
+                break;
+            case 'C':
+            case 'c':
+                getNextNumberOfValues(s, i, 6, path, currentCommand);
+                break;
+            case 'Z':
+            case 'z':
+                getNextNumberOfValues(s, i, 0, path, currentCommand);
+                break;
+            case 'S':
+            case 's':
+                getNextNumberOfValues(s, i, 4, path, currentCommand);
+                break;
+            }
+        }
+        else {
+            if (currentCommand == 'M' || currentCommand == 'm' && passM)
+                currentCommand = 'L';
+            i++;
+            switch (currentCommand) {
+            case 'M':
+            case 'm':
+                getNextNumberOfValues(s, i, 2, path, currentCommand);
+                break;
+            case 'L':
+            case 'l':
+                getNextNumberOfValues(s, i, 2, path, currentCommand);
+                break;
+            case 'H':
+            case 'h':
+            case 'V':
+            case 'v':
+                getNextNumberOfValues(s, i, 1, path, currentCommand);
+                break;
+            case 'C':
+            case 'c':
+                getNextNumberOfValues(s, i, 6, path, currentCommand);
+                break;
+            case 'Z':
+            case 'z':
+                getNextNumberOfValues(s, i, 0, path, currentCommand);
+                break;
+            case 'S':
+            case 's':
+                getNextNumberOfValues(s, i, 4, path, currentCommand);
+                break;
+            }
+        }
+        if (s[i] == ' ') i++;
+        if (s[i] >= '0' && s[i] <= '9' || s[i] == '-') {
+            i--;
+        }
+    }
+}
+
 
 void parsePoints(string s, vector<pair<float, float>>& allPoints) {
 
@@ -73,13 +194,13 @@ void parsePoints(string s, vector<pair<float, float>>& allPoints) {
             allPoints.push_back(make_pair(x, y));
         }
     }
-}
+} //
 
 string toLower(string s)
 {
     transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
-}
+} //
 
 void convert_letters_to_RGB(RGB& rgb, string s)
 {
@@ -166,7 +287,7 @@ void convert_letters_to_RGB(RGB& rgb, string s)
     {
         rgb = { 255,255,255 };
     }
-}
+} //
 
 void convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
 {
@@ -205,6 +326,47 @@ void convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
             rgb.b = hexValue & 0xFF;
             int alpha = (hexValue >> 24) & 0xFF;
         }
+    }
+} //
+
+vector<string> mergeVector(vector<string> v1, vector<string> v2) {
+    vector<string> v3;
+
+    for (string s : v1) {
+        bool found = false;
+        for (string x : v2) {
+            if (s == x) {
+                found = true;
+
+                break;
+            }
+        }
+
+        if (!found) {
+            //vector3.insert(vector3.begin(), s);
+            v3.push_back(s);
+        }
+    }
+
+    for (string s : v2) {
+        v3.push_back(s);
+    }
+    return v3;
+}
+
+void parseTransformChild(const string& transformStr, Transform& transform, groupChild& groupChild) {
+    parseTransform(transformStr, transform);
+    if (!transformStr.empty()) {
+        transform.translateX += groupChild.transform.translateX;
+        transform.translateY += groupChild.transform.translateY;
+        transform.rotateAngle += groupChild.transform.rotateAngle;
+        transform.rotateAngle = (transform.rotateAngle > 360) ? (transform.rotateAngle - 360) : transform.rotateAngle;
+        transform.scaleX *= groupChild.transform.scaleX;
+        transform.scaleY *= groupChild.transform.scaleY;
+        transform.transformOrder = mergeVector(groupChild.transform.transformOrder, transform.transformOrder);
+    }
+    else {
+        transform = groupChild.transform;
     }
 }
 
