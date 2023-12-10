@@ -487,6 +487,24 @@ void ZoomGraphics(Graphics& graphics, float scale)
     graphics.ScaleTransform(scale, scale);
 }
 
+GraphicsState TransformSVG(Graphics& graphics, Transform transform)
+{
+    GraphicsState state = graphics.Save();
+    Matrix transformMatrix;
+
+    for (const string& operation : transform.transformOrder)
+    {
+        if (operation == "translate")
+            transformMatrix.Translate(transform.translateX, transform.translateY);
+        else if (operation == "scale")
+            transformMatrix.Scale(transform.scaleX, transform.scaleY);
+        else if (operation == "rotate")
+            transformMatrix.Rotate(transform.rotateAngle);
+    }
+    graphics.MultiplyTransform(&transformMatrix);
+    return state;
+}
+
 class Shape
 {
 protected:
@@ -1942,7 +1960,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
     }
 }
 
-string GetClassName(SVGElement* element)
+string GetClassName(Shape* element)
 {
     if (dynamic_cast<Circle*>(element) != NULL)
     {
