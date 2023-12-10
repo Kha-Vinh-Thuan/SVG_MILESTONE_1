@@ -1,4 +1,4 @@
-﻿//SVG
+﻿﻿//SVG
 #include "stdafx.h"
 #include "rapidxml.hpp"
 #include "pugixml.hpp"
