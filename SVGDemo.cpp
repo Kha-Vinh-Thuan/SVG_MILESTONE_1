@@ -175,7 +175,6 @@ void convertPathToValue(string s, Path& path) {
     }
 }
 
-
 void parsePoints(string s, vector<pair<float, float>>& allPoints) {
 
     int i = 0;
@@ -328,6 +327,113 @@ void convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
         }
     }
 } //
+
+vector<string> split(string& s, char deli)
+{
+    vector<string> tokens;
+    istringstream tokenStream(s);
+    string token;
+    while (getline(tokenStream, token, deli))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+bool containsKeyword(string& s, string keyword)
+{
+    return s.find(keyword) != string::npos;
+}
+
+string standardize(string transform) {
+    string result;
+
+    int pos = 0;
+    while (pos < transform.length()) {
+        int open = transform.find("(", pos);
+        if (open == string::npos) break;
+
+        int close = transform.find(")", open);
+        if (close == string::npos) break;
+
+        string content = transform.substr(open + 1, close - open - 1);
+
+        if (content.find(",") == string::npos) {
+            int space = content.find(" ");
+            if (space != string::npos) {
+                content.insert(space, ",");
+            }
+        }
+
+        result += transform.substr(pos, open - pos + 1);
+        result += content;
+        result += ")";
+
+        pos = close + 1;
+    }
+
+    result += transform.substr(pos);
+
+    return result;
+}
+
+void parseTransform(const string& transformStr, Transform& transform)
+{
+    transform.transformOrder.clear();
+    string transformString = transformStr;
+    transformString = standardize(transformString);
+    vector<string> transformDeli = split(transformString, ' ');
+    for (string& deli : transformDeli) {
+        if (containsKeyword(deli, "rotate")) {
+            transform.transformOrder.push_back("rotate");
+        }
+        else if (containsKeyword(deli, "scale")) {
+            transform.transformOrder.push_back("scale");
+        }
+        else if (containsKeyword(deli, "translate")) {
+            transform.transformOrder.push_back("translate");
+        }
+    }
+
+    // Xử lý translate
+    smatch translateMatches;
+    regex translateRegex("translate\\(([^,]+),([^)]+)\\)");
+    if (regex_search(transformString, translateMatches, translateRegex)) {
+        transform.translateX = stod(translateMatches[1]);
+        transform.translateY = stod(translateMatches[2]);
+    }
+    // Xử lý rotate
+    regex rotateRegex("rotate\\(([^)]+)\\)");
+    smatch rotateMatches;
+    if (regex_search(transformString, rotateMatches, rotateRegex)) {
+        transform.rotateAngle = stod(rotateMatches[1]);
+    }
+    // Xử lý scale
+    bool check = false;
+    regex scaleCheck("scale\\((.*?)\\)");
+    smatch scaleCheckMatches;
+    regex scaleRegex("scale\\(([^,]+)(?:,([^)]+))?\\)");
+    smatch scaleMatches;
+
+    if (regex_search(transformString, scaleCheckMatches, scaleCheck)) {
+        string scaleStr = scaleCheckMatches[1].str();
+        size_t findPos = scaleCheckMatches[1].str().find(',');
+        if (findPos == 1)
+            check = true;
+    }
+    if (regex_search(transformString, scaleMatches, scaleRegex)) {
+        float num1 = stof(scaleMatches[1].str());
+        if (check) {
+            float num2 = stof(scaleMatches[2].str());
+            transform.scaleX = num1;
+            transform.scaleY = num2;
+        }
+        else {
+
+            transform.scaleX = transform.scaleY = num1;
+        }
+    }
+}
 
 vector<string> mergeVector(vector<string> v1, vector<string> v2) {
     vector<string> v3;
@@ -659,10 +765,13 @@ public:
 
         if (numPoints > 0)
         {
-            if (fillRGB.r != 256 && fillRGB.b != 256 && fillRGB.g != 256 && fillOpacity == 0)
-                graphics.FillPolygon(&polylineBrush, pointsArrayPtr, numPoints);
-            if (strokeRGB.r != 256 && strokeRGB.b != 256 && strokeRGB.g != 256 && strokeOpacity == 0)
+            if (fillRGB.r == 256 && fillRGB.b == 256 && fillRGB.g == 256)
                 graphics.DrawLines(&polylinePen, pointsArrayPtr, numPoints);
+            else
+            {
+                graphics.FillPolygon(&polylineBrush, pointsArrayPtr, numPoints);
+                graphics.DrawLines(&polylinePen, pointsArrayPtr, numPoints);
+            }
         }
         graphics.Restore(state);
     }
@@ -698,10 +807,8 @@ public:
 
         if (numPoints > 0)
         {
-            if (fillRGB.r != 256 && fillRGB.b != 256 && fillRGB.g != 256 && fillOpacity == 0)
-                graphics.FillPolygon(&polygonBrush, pointsArrayPtr, numPoints, FillModeWinding);
-            if (strokeRGB.r != 256 && strokeRGB.b != 256 && strokeRGB.g != 256 && strokeOpacity == 0)
-                graphics.DrawPolygon(&polygonPen, pointsArrayPtr, numPoints);
+            graphics.FillPolygon(&polygonBrush, pointsArrayPtr, numPoints, FillModeWinding);
+            graphics.DrawPolygon(&polygonPen, pointsArrayPtr, numPoints);
         }
         graphics.Restore(state);
     }
@@ -892,6 +999,8 @@ public:
 };
 
 bool isParsingGroup = false;
+
+vector<bool> checkRGB;
 
 void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild groupChild) {
 
@@ -1137,7 +1246,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             fillOpacity = 0;
             fillRGB = { 256,256,256 };
         }
-        else if (!fill.empty() && fill != "none") {
+        else if (!fill.empty()) {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
         else {
@@ -1150,18 +1259,24 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         float strokeOpacity = node.attribute("stroke-opacity").empty()
             ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
-        if (stroke == "none")
-        {
-            strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
-        }
-        else if (!stroke.empty() && stroke != "none") {
+        if (!stroke.empty() && stroke != "none") {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
-            if (groupChild.strokeRGB.r == groupChild.strokeRGB.g == groupChild.strokeRGB.b == strokeRGB.r == strokeRGB.g == strokeRGB.b == 0)
-                strokeOpacity = 0;
+            auto temp = strokeOpacity;
+            auto temp_ = strokeWidth;
+            for (const auto& checkk : checkRGB)
+            {
+                if (checkk)
+                {
+                    strokeWidth = temp_;
+                    strokeOpacity = temp;
+                    break;
+                }
+                strokeWidth = strokeOpacity = 0;
+            }
         }
 
 
@@ -1185,12 +1300,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         float fillOpacity = node.attribute("fill-opacity").empty()
             ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
-        if (fill == "none")
-        {
-            fillOpacity = 0;
-            fillRGB = { 256,256,256 };
-        }
-        else if (!fill.empty() && fill != "none") {
+        if (!fill.empty()) {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
         else {
@@ -1203,21 +1313,23 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         float strokeOpacity = node.attribute("stroke-opacity").empty()
             ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
-        if (stroke == "none")
-        {
-            strokeOpacity = 0;
-            strokeRGB = { 256,256,256 };
-        }
-        else if (!stroke.empty() && stroke != "none") {
+        if (!stroke.empty()) {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
         else
         {
             strokeRGB = groupChild.strokeRGB;
-            if (groupChild.strokeRGB.r == groupChild.strokeRGB.g == groupChild.strokeRGB.b == 0)
+            auto temp = strokeOpacity;
+            auto temp_ = strokeWidth;
+            for (const auto& checkk : checkRGB)
             {
-                strokeOpacity = 0;
-                strokeWidth = 0;
+                if (checkk)
+                {
+                    strokeWidth = temp_;
+                    strokeOpacity = temp;
+                    break;
+                }
+                strokeWidth = strokeOpacity = 0;
             }
         }
 
@@ -1322,8 +1434,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
                 strokeOpacity = 0;
         }
 
-
-
         //TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
@@ -1365,10 +1475,10 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         float strokeOpacity = node.attribute("stroke-opacity").empty()
             ? 1 : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
-        if (fill == "none")
+        if (stroke == "none")
         {
-            fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            strokeOpacity = 0;
+            strokeRGB = { 255,255,255 };
         }
 
         convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
@@ -1650,7 +1760,6 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
             else if (elementName == "polygon")
             {
                 string points = elementNode.attribute("points").value();
-
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
@@ -1672,7 +1781,6 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none")
                 {
-                    strokeOpacity = 0;
                     strokeRGB = { 255,255,255 };
                 }
                 else
@@ -1789,13 +1897,24 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
                     ? 1 : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
-                convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
+                if (fill == "none")
+                {
+                    fillOpacity = 0;
+                    fillRGB = { 256,256,256 };
+                }
+                else
+                    convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
                 //STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
                     ? 1 : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
+                if (stroke == "")
+                {
+                    bool checked = false;
+                    checkRGB.push_back(checked);
+                }
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
                     ? 1 : elementNode.attribute("stroke-width").as_float();
 
@@ -1814,7 +1933,6 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 groupChild_.fontSize = fontSize;
 
                 vector<Shape*> shapes;
-                int i = 0;
                 // Duyệt qua các node con bên trong group
                 for (pugi::xml_node& childNode : elementNode.children())
                 {
