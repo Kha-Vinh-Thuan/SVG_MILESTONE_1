@@ -1,4 +1,4 @@
-﻿﻿//SVG
+﻿//SVG
 #include "stdafx.h"
 #include "rapidxml.hpp"
 #include "pugixml.hpp"
@@ -8,17 +8,17 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <string>
+#include <vector>
 #include <regex>
 #include <Windows.h>
 #include <Windowsx.h> 
 #include <sstream>
 #include <memory>
-#include <locale>
 #include <codecvt>
 #include <string>
 #include <map>
 #include <locale>
+#include <codecvt>
 #include <GdiPlusEnums.h>
 #include <GdiPlusFontFamily.h>
 #include <GdiPlusHeaders.h>
@@ -193,13 +193,12 @@ void parsePoints(string s, vector<pair<float, float>>& allPoints) {
             allPoints.push_back(make_pair(x, y));
         }
     }
-} //
-
+}
 string toLower(string s)
 {
     transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
-} //
+}
 
 void convert_letters_to_RGB(RGB& rgb, string s)
 {
@@ -286,7 +285,7 @@ void convert_letters_to_RGB(RGB& rgb, string s)
     {
         rgb = { 255,255,255 };
     }
-} //
+}
 
 void convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
 {
@@ -326,7 +325,7 @@ void convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
             int alpha = (hexValue >> 24) & 0xFF;
         }
     }
-} //
+}
 
 vector<string> split(string& s, char deli)
 {
@@ -1174,6 +1173,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
 
     else if (nodeName == "text")
     {
+
         float x = node.attribute("x").as_float();
         float y = node.attribute("y").as_float();
         float dx = node.attribute("dx").as_float();
@@ -1266,7 +1266,8 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         else if (!fill.empty()) {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
@@ -1296,6 +1297,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             }
         }
 
+
         //TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
@@ -1308,6 +1310,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
     else if (nodeName == "polygon")
     {
         string points = node.attribute("points").value();
+
         RGB fillRGB, strokeRGB;
         smatch matches;
 
@@ -1448,7 +1451,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             if (groupChild.strokeRGB.r == groupChild.strokeRGB.g == groupChild.strokeRGB.b == strokeRGB.r == strokeRGB.g == strokeRGB.b)
                 strokeOpacity = 0;
         }
-
         //TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
@@ -1464,10 +1466,8 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
 
     else if (nodeName == "g") 
     {
-        if (isParsingGroup) 
-        {
+        if (isParsingGroup)
             return;
-        }
         isParsingGroup = true;
         vector<Shape*> groupElements;
         RGB fillRGB, strokeRGB;
@@ -1529,6 +1529,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         Group* group = new Group(groupElements, strokeOpacity, fillOpacity, strokeRGB, fillRGB, strokeWidth, transform, fontSize);
         elements.push_back(group);
     }
+
 }
 
 void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
@@ -1588,8 +1589,8 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 elements.push_back(circle);
             }
 
-            else if (elementName == "rect") 
-            {
+            else if (elementName == "rect") {
+
                 float x = elementNode.attribute("x").as_float();
                 float y = elementNode.attribute("y").as_float();
                 float width = elementNode.attribute("width").as_float();
@@ -1667,6 +1668,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
 
             else if (elementName == "text")
             {
+
                 float x = elementNode.attribute("x").as_float();
                 float y = elementNode.attribute("y").as_float();
                 float dx = elementNode.attribute("dx").as_float();
@@ -1744,7 +1746,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 256,256,256 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
@@ -1775,6 +1777,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
             else if (elementName == "polygon")
             {
                 string points = elementNode.attribute("points").value();
+
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
@@ -1885,6 +1888,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
                     ? 1 : elementNode.attribute("stroke-width").as_float();
 
+
                 //TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
@@ -1947,6 +1951,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 groupChild_.fontSize = fontSize;
 
                 vector<Shape*> shapes;
+                int i = 0;
                 // Duyệt qua các node con bên trong group
                 for (pugi::xml_node& childNode : elementNode.children())
                 {
@@ -1962,33 +1967,32 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
 
 string GetClassName(Shape* element)
 {
-    if (dynamic_cast<Circle*>(element) != NULL)
-    {
+    if (dynamic_cast<Circle*>(element) != NULL) {
         return "Circle";
     }
-    else if (dynamic_cast<Rect_*>(element) != NULL)
-    {
+    else if (dynamic_cast<Rect_*>(element) != NULL) {
         return "Rect";
     }
-    else if (dynamic_cast<Line*>(element) != NULL)
-    {
+    else if (dynamic_cast<Line*>(element) != NULL) {
         return "Line";
     }
-    else if (dynamic_cast<Text*>(element) != NULL)
-    {
+    else if (dynamic_cast<Text*>(element) != NULL) {
         return "Text";
     }
-    else if (dynamic_cast<Polyline_*>(element) != NULL)
-    {
+    else if (dynamic_cast<Polyline_*>(element) != NULL) {
         return "Polyline";
     }
-    else if (dynamic_cast<Polygon_*>(element) != NULL)
-    {
+    else if (dynamic_cast<Polygon_*>(element) != NULL) {
         return "Polygon";
     }
-    else if (dynamic_cast<Ellipse_*>(element) != NULL)
-    {
+    else if (dynamic_cast<Ellipse_*>(element) != NULL) {
         return "Ellipse";
+    }
+    else if (dynamic_cast<ClassPath*>(element) != NULL) {
+        return "Path";
+    }
+    if (dynamic_cast<Group*>(element) != NULL) {
+        return "Group";
     }
 }
 
@@ -1999,7 +2003,7 @@ VOID OnPaint(HDC hdc)
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
 
     vector<Shape*> elements;
-    parseAndRenderSVG("sample.svg", elements);
+    parseAndRenderSVG("svg-17.svg", elements);
 
     for (const auto& element : elements)
     {
@@ -2044,7 +2048,6 @@ VOID OnPaint(HDC hdc)
     }
     graphics.ResetTransform();
 }
-
 int lastMouseX = 0;
 int lastMouseY = 0;
 
@@ -2110,7 +2113,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
     xml_document<> doc;
     xml_node<>* rootNode;
 
-    ifstream file("sample.svg");
+    ifstream file("svg-17.svg");
     vector<char> buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
     buffer.push_back('\0');
 
