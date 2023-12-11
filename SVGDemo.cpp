@@ -1,4 +1,4 @@
-﻿﻿//SVG
+﻿//SVG
 #include "stdafx.h"
 #include "rapidxml.hpp"
 #include "pugixml.hpp"
@@ -14,6 +14,7 @@
 #include <Windowsx.h> 
 #include <sstream>
 #include <memory>
+#include <locale>
 #include <codecvt>
 #include <string>
 #include <map>
@@ -23,8 +24,8 @@
 #include <GdiPlusFontFamily.h>
 #include <GdiPlusHeaders.h>
 
-using namespace std;
 using namespace rapidxml;
+using namespace std;
 using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
 
@@ -194,6 +195,7 @@ void parsePoints(string s, vector<pair<float, float>>& allPoints) {
         }
     }
 }
+
 string toLower(string s)
 {
     transform(s.begin(), s.end(), s.begin(), ::tolower);
@@ -270,6 +272,7 @@ void convert_letters_to_RGB(RGB& rgb, string s)
         {"dimgray", {105, 105, 105}},
         {"rosybrown", {188, 143, 143}},
         {"indianred", {205, 92, 92}},
+        {"blueviolet", {138, 43, 226}},
         {"skyblue", {135, 206, 235}}
 
     };
@@ -398,14 +401,14 @@ void parseTransform(const string& transformStr, Transform& transform)
     smatch translateMatches;
     regex translateRegex("translate\\(([^,]+),([^)]+)\\)");
     if (regex_search(transformString, translateMatches, translateRegex)) {
-        transform.translateX = stod(translateMatches[1]);
-        transform.translateY = stod(translateMatches[2]);
+        transform.translateX = stof(translateMatches[1]);
+        transform.translateY = stof(translateMatches[2]);
     }
     // Xử lý rotate
     regex rotateRegex("rotate\\(([^)]+)\\)");
     smatch rotateMatches;
     if (regex_search(transformString, rotateMatches, rotateRegex)) {
-        transform.rotateAngle = stod(rotateMatches[1]);
+        transform.rotateAngle = stof(rotateMatches[1]);
     }
     // Xử lý scale
     bool check = false;
@@ -415,12 +418,18 @@ void parseTransform(const string& transformStr, Transform& transform)
     smatch scaleMatches;
 
     if (regex_search(transformString, scaleCheckMatches, scaleCheck)) {
-        string scaleStr = scaleCheckMatches[1].str();
-        size_t findPos = scaleCheckMatches[1].str().find(',');
-        if (findPos == 1)
+        string scalePart = scaleCheckMatches[1];
+        if (scalePart.find(",") != string::npos) {
             check = true;
+        }
+        if (scalePart.find(", ") != string::npos) {
+            check = true;
+        }
+
     }
+
     if (regex_search(transformString, scaleMatches, scaleRegex)) {
+
         float num1 = stof(scaleMatches[1].str());
         if (check) {
             float num2 = stof(scaleMatches[2].str());
@@ -428,7 +437,6 @@ void parseTransform(const string& transformStr, Transform& transform)
             transform.scaleY = num2;
         }
         else {
-
             transform.scaleX = transform.scaleY = num1;
         }
     }
@@ -493,10 +501,10 @@ GraphicsState TransformSVG(Graphics& graphics, Transform transform)
 
     for (const string& operation : transform.transformOrder)
     {
-        if (operation == "translate")
-            transformMatrix.Translate(transform.translateX, transform.translateY);
-        else if (operation == "scale")
+        if (operation == "scale")
             transformMatrix.Scale(transform.scaleX, transform.scaleY);
+        else if (operation == "translate")
+            transformMatrix.Translate(transform.translateX, transform.translateY);
         else if (operation == "rotate")
             transformMatrix.Rotate(transform.rotateAngle);
     }
@@ -558,11 +566,11 @@ public:
 
     virtual void Draw(Graphics& graphics) override
     {
-        GraphicsState state = TransformSVG(graphics, transform);
         SolidBrush circleBrush(Color(255 * fillOpacity, fillRGB.r, fillRGB.g, fillRGB.b));
-        graphics.FillEllipse(&circleBrush, cx - r, cy - r, 2 * r, 2 * r);
-
         Pen circlePen(Color(255 * strokeOpacity, strokeRGB.r, strokeRGB.g, strokeRGB.b), strokeWidth);
+
+        GraphicsState state = TransformSVG(graphics, transform);
+        graphics.FillEllipse(&circleBrush, cx - r, cy - r, 2 * r, 2 * r);
         graphics.DrawEllipse(&circlePen, cx - (r + strokeWidth / 2), cy - (r + strokeWidth / 2), 2 * (r + strokeWidth / 2), 2 * (r + strokeWidth / 2));
         graphics.Restore(state);
     }
@@ -579,11 +587,11 @@ public:
         : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform), x(x), y(y), width(width), height(height) {}
     virtual void Draw(Graphics& graphics) override
     {
-        GraphicsState state = TransformSVG(graphics, transform);
         SolidBrush RectBrush(Color(255 * fillOpacity, fillRGB.r, fillRGB.g, fillRGB.b));
-        graphics.FillRectangle(&RectBrush, x, y, width, height);
-
         Pen RectBorderPen(Color(255 * strokeOpacity, strokeRGB.r, strokeRGB.g, strokeRGB.b), strokeWidth);
+
+        GraphicsState state = TransformSVG(graphics, transform);
+        graphics.FillRectangle(&RectBrush, x, y, width, height);
         graphics.DrawRectangle(&RectBorderPen, x, y, width, height);
         graphics.Restore(state);
     }
@@ -1018,7 +1026,6 @@ public:
 bool isParsingGroup = false;
 
 vector<bool> checkRGB;
-
 void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild groupChild) {
 
     string nodeName = node.name();
@@ -1464,10 +1471,10 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(path);
     }
 
-    else if (nodeName == "g") 
-    {
-        if (isParsingGroup)
+    else if (nodeName == "g") {
+        if (isParsingGroup) {
             return;
+        }
         isParsingGroup = true;
         vector<Shape*> groupElements;
         RGB fillRGB, strokeRGB;
@@ -1797,8 +1804,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
                     ? 1 : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
-                if (stroke == "none")
-                {
+                if (stroke == "none") {
                     strokeRGB = { 255,255,255 };
                 }
                 else
@@ -1933,6 +1939,11 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                     bool checked = false;
                     checkRGB.push_back(checked);
                 }
+                else
+                {
+                    bool checked = true;
+                    checkRGB.push_back(checked);
+                }
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
                     ? 1 : elementNode.attribute("stroke-width").as_float();
 
@@ -2003,7 +2014,7 @@ VOID OnPaint(HDC hdc)
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
 
     vector<Shape*> elements;
-    parseAndRenderSVG("svg-17.svg", elements);
+    parseAndRenderSVG("svg-08.svg", elements);
 
     for (const auto& element : elements)
     {
@@ -2113,7 +2124,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
     xml_document<> doc;
     xml_node<>* rootNode;
 
-    ifstream file("svg-17.svg");
+    ifstream file("svg-16.svg");
     vector<char> buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
     buffer.push_back('\0');
 
