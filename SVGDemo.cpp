@@ -1318,11 +1318,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             strokeOpacity = 0;
             strokeRGB = { 255, 255, 255 };
         }
-        else if (stroke == "")
-        {
-            strokeRGB = { 255, 255, 255 };
-            checkk = 0;
-        }
+
         else if (!stroke.empty())
         {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
@@ -1330,6 +1326,10 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         else
         {
             strokeRGB = groupChild.strokeRGB;
+            if (stroke == "" && strokeRGB.r == 255 && strokeRGB.g == 255 && strokeRGB.b == 255)
+            {
+                checkk = 0;
+            }
         }
 
         float strokeWidth = node.attribute("stroke-width").empty()
@@ -2177,7 +2177,7 @@ string GetClassName(Shape* element)
     return "Shape";
 }
 
-string filename = "sample.svg";
+string filename = "svg-18.svg";
 
 VOID OnPaint(HDC hdc)
 {
