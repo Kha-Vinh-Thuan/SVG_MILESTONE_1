@@ -1,4 +1,4 @@
-﻿//SVG
+﻿// SVG
 #include "stdafx.h"
 #include "rapidxml.hpp"
 #include "pugixml.hpp"
@@ -6,12 +6,13 @@
 #include <objidl.h>
 #include <gdiplus.h>
 #include <vector>
+#include <shellapi.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include <regex>
 #include <Windows.h>
-#include <Windowsx.h> 
+#include <Windowsx.h>
 #include <sstream>
 #include <memory>
 #include <locale>
@@ -27,7 +28,8 @@
 using namespace rapidxml;
 using namespace std;
 using namespace Gdiplus;
-#pragma comment (lib,"Gdiplus.lib")
+#pragma comment(lib, "Gdiplus.lib")
+
 
 struct RGB
 {
@@ -36,8 +38,7 @@ struct RGB
 
 struct Transform
 {
-    float translateX, translateY, rotateAngle;
-    float scaleX, scaleY;
+    float translateX, translateY, rotateAngle, scaleX, scaleY;
     vector<string> transformOrder;
 };
 
@@ -52,12 +53,15 @@ struct groupChild
 struct Path
 {
     vector<float> value;
-    vector <char> type;
+    vector<char> type;
 };
 
-string chuanhoa(string input) {
-    for (int i = 0; i < input.length(); i++) {
-        if (input[i] == ',') {
+string chuanhoa(string input)
+{
+    for (int i = 0; i < input.length(); i++)
+    {
+        if (input[i] == ',')
+        {
             input[i] = ' ';
         }
     }
@@ -66,9 +70,11 @@ string chuanhoa(string input) {
     string word;
     bool first = true;
 
-    while (iss >> word) {
+    while (iss >> word)
+    {
 
-        if (!first) {
+        if (!first)
+        {
             oss << " ";
         }
         oss << word;
@@ -77,10 +83,13 @@ string chuanhoa(string input) {
     return oss.str();
 }
 
-void getNextNumberOfValues(string& s, int& i, int num, Path& path, char curType) {
+void getNextNumberOfValues(string& s, int& i, int num, Path& path, char curType)
+{
     int count = 0;
-    for (int j = 0; j < num; ++j) {
-        if (isdigit(s[i]) || s[i] == '-' || s[i] == '.' || s[i] == ' ') {
+    for (int j = 0; j < num; ++j)
+    {
+        if (isdigit(s[i]) || s[i] == '-' || s[i] == '.' || s[i] == ' ')
+        {
             size_t next_pos;
             double num = stod(s.substr(i), &next_pos);
             path.value.push_back(num);
@@ -90,7 +99,8 @@ void getNextNumberOfValues(string& s, int& i, int num, Path& path, char curType)
     path.type.push_back(curType);
 }
 
-void convertPathToValue(string s, Path& path) {
+void convertPathToValue(string s, Path& path)
+{
 
     char currentCommand = '\0';
     path.type.clear();
@@ -99,15 +109,18 @@ void convertPathToValue(string s, Path& path) {
     bool passM = false;
     s = chuanhoa(s);
     int i = 0;
-    while (i < s.length()) {
-        if (isalpha(s[i])) {
+    while (i < s.length())
+    {
+        if (isalpha(s[i]))
+        {
 
             currentCommand = s[i];
             if (currentCommand == 'M' || currentCommand == 'm' && !passM)
                 passM = true;
             i++;
 
-            switch (currentCommand) {
+            switch (currentCommand)
+            {
             case 'M':
             case 'm':
                 getNextNumberOfValues(s, i, 2, path, currentCommand);
@@ -136,11 +149,13 @@ void convertPathToValue(string s, Path& path) {
                 break;
             }
         }
-        else {
+        else
+        {
             if (currentCommand == 'M' || currentCommand == 'm' && passM)
                 currentCommand = 'L';
             i++;
-            switch (currentCommand) {
+            switch (currentCommand)
+            {
             case 'M':
             case 'm':
                 getNextNumberOfValues(s, i, 2, path, currentCommand);
@@ -169,20 +184,25 @@ void convertPathToValue(string s, Path& path) {
                 break;
             }
         }
-        if (s[i] == ' ') i++;
-        if (s[i] >= '0' && s[i] <= '9' || s[i] == '-') {
+        if (s[i] == ' ')
+            i++;
+        if (s[i] >= '0' && s[i] <= '9' || s[i] == '-')
+        {
             i--;
         }
     }
 }
 
-void parsePoints(string s, vector<pair<float, float>>& allPoints) {
+void parsePoints(string s, vector<pair<float, float>>& allPoints)
+{
 
     int i = 0;
     s = chuanhoa(s);
-    while (i < s.length()) {
+    while (i < s.length())
+    {
 
-        if (isdigit(s[i]) || s[i] == '-' || s[i] == '.' || s[i] == ' ') {
+        if (isdigit(s[i]) || s[i] == '-' || s[i] == '.' || s[i] == ' ')
+        {
 
             size_t next_pos;
             float x = stof(s.substr(i), &next_pos);
@@ -286,7 +306,7 @@ void convert_letters_to_RGB(RGB& rgb, string s)
     }
     else
     {
-        rgb = { 255,255,255 };
+        rgb = { 255, 255, 255 };
     }
 }
 
@@ -316,7 +336,8 @@ void convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
         else if (s[0] == '#')
         {
             unsigned int hexValue;
-            if (s.length() == 4) {
+            if (s.length() == 4)
+            {
                 char a1 = s[1], a2 = s[2], a3 = s[3];
                 s = "#" + string(1, a1) + string(1, a1) + string(1, a2) + string(1, a2) + string(1, a3) + string(1, a3);
             }
@@ -347,22 +368,28 @@ bool containsKeyword(string& s, string keyword)
     return s.find(keyword) != string::npos;
 }
 
-string standardize(string transform) {
+string standardize(string transform)
+{
     string result;
 
     int pos = 0;
-    while (pos < transform.length()) {
+    while (pos < transform.length())
+    {
         int open = transform.find("(", pos);
-        if (open == string::npos) break;
+        if (open == string::npos)
+            break;
 
         int close = transform.find(")", open);
-        if (close == string::npos) break;
+        if (close == string::npos)
+            break;
 
         string content = transform.substr(open + 1, close - open - 1);
 
-        if (content.find(",") == string::npos) {
+        if (content.find(",") == string::npos)
+        {
             int space = content.find(" ");
-            if (space != string::npos) {
+            if (space != string::npos)
+            {
                 content.insert(space, ",");
             }
         }
@@ -378,6 +405,7 @@ string standardize(string transform) {
 
     return result;
 }
+bool checkScale = false;
 
 void parseTransform(const string& transformStr, Transform& transform)
 {
@@ -385,14 +413,18 @@ void parseTransform(const string& transformStr, Transform& transform)
     string transformString = transformStr;
     transformString = standardize(transformString);
     vector<string> transformDeli = split(transformString, ' ');
-    for (string& deli : transformDeli) {
-        if (containsKeyword(deli, "rotate")) {
+    for (string& deli : transformDeli)
+    {
+        if (containsKeyword(deli, "rotate"))
+        {
             transform.transformOrder.push_back("rotate");
         }
-        else if (containsKeyword(deli, "scale")) {
+        else if (containsKeyword(deli, "scale"))
+        {
             transform.transformOrder.push_back("scale");
         }
-        else if (containsKeyword(deli, "translate")) {
+        else if (containsKeyword(deli, "translate"))
+        {
             transform.transformOrder.push_back("translate");
         }
     }
@@ -400,14 +432,16 @@ void parseTransform(const string& transformStr, Transform& transform)
     // Xử lý translate
     smatch translateMatches;
     regex translateRegex("translate\\(([^,]+),([^)]+)\\)");
-    if (regex_search(transformString, translateMatches, translateRegex)) {
+    if (regex_search(transformString, translateMatches, translateRegex))
+    {
         transform.translateX = stof(translateMatches[1]);
         transform.translateY = stof(translateMatches[2]);
     }
     // Xử lý rotate
     regex rotateRegex("rotate\\(([^)]+)\\)");
     smatch rotateMatches;
-    if (regex_search(transformString, rotateMatches, rotateRegex)) {
+    if (regex_search(transformString, rotateMatches, rotateRegex))
+    {
         transform.rotateAngle = stof(rotateMatches[1]);
     }
     // Xử lý scale
@@ -417,59 +451,68 @@ void parseTransform(const string& transformStr, Transform& transform)
     regex scaleRegex("scale\\(([^,]+)(?:,([^)]+))?\\)");
     smatch scaleMatches;
 
-    if (regex_search(transformString, scaleCheckMatches, scaleCheck)) {
+    if (regex_search(transformString, scaleCheckMatches, scaleCheck))
+    {
         string scalePart = scaleCheckMatches[1];
-        if (scalePart.find(",") != string::npos) {
+        if (scalePart.find(",") != string::npos)
             check = true;
-        }
-        if (scalePart.find(", ") != string::npos) {
-            check = true;
-        }
-
     }
 
-    if (regex_search(transformString, scaleMatches, scaleRegex)) {
+    if (regex_search(transformString, scaleMatches, scaleRegex))
+    {
 
         float num1 = stof(scaleMatches[1].str());
-        if (check) {
+        if (check)
+        {
             float num2 = stof(scaleMatches[2].str());
             transform.scaleX = num1;
             transform.scaleY = num2;
         }
-        else {
-            transform.scaleX = transform.scaleY = num1;
+        else
+        {
+            checkScale = true;
+            transform.scaleY = num1;
+            transform.scaleX = num1;
         }
     }
 }
 
-vector<string> mergeVector(vector<string> v1, vector<string> v2) {
+vector<string> mergeVector(vector<string> v1, vector<string> v2)
+{
     vector<string> v3;
 
-    for (string s : v1) {
+    for (string s : v1)
+    {
         bool found = false;
-        for (string x : v2) {
-            if (s == x) {
+        for (string x : v2)
+        {
+            if (s == x)
+            {
                 found = true;
 
                 break;
             }
         }
 
-        if (!found) {
-            //vector3.insert(vector3.begin(), s);
+        if (!found)
+        {
+            // vector3.insert(vector3.begin(), s);
             v3.push_back(s);
         }
     }
 
-    for (string s : v2) {
+    for (string s : v2)
+    {
         v3.push_back(s);
     }
     return v3;
 }
 
-void parseTransformChild(const string& transformStr, Transform& transform, groupChild& groupChild) {
+void parseTransformChild(const string& transformStr, Transform& transform, groupChild& groupChild)
+{
     parseTransform(transformStr, transform);
-    if (!transformStr.empty()) {
+    if (!transformStr.empty())
+    {
         transform.translateX += groupChild.transform.translateX;
         transform.translateY += groupChild.transform.translateY;
         transform.rotateAngle += groupChild.transform.rotateAngle;
@@ -478,7 +521,8 @@ void parseTransformChild(const string& transformStr, Transform& transform, group
         transform.scaleY *= groupChild.transform.scaleY;
         transform.transformOrder = mergeVector(groupChild.transform.transformOrder, transform.transformOrder);
     }
-    else {
+    else
+    {
         transform = groupChild.transform;
     }
 }
@@ -502,7 +546,10 @@ GraphicsState TransformSVG(Graphics& graphics, Transform transform)
     for (const string& operation : transform.transformOrder)
     {
         if (operation == "scale")
-            transformMatrix.Scale(transform.scaleX, transform.scaleY);
+            if (checkScale)
+                transformMatrix.Scale(transform.scaleX, transform.scaleX);
+            else
+                transformMatrix.Scale(transform.scaleX, transform.scaleY);
         else if (operation == "translate")
             transformMatrix.Translate(transform.translateX, transform.translateY);
         else if (operation == "rotate")
@@ -518,6 +565,7 @@ protected:
     float fillOpacity, strokeOpacity, strokeWidth;
     RGB fillRGB, strokeRGB;
     Transform transform;
+
 public:
     Shape(vector<string> transformOrder)
         : fillOpacity(1.0f), strokeOpacity(1.0f), strokeWidth(1.0f),
@@ -531,7 +579,6 @@ public:
         : fillRGB(fillRGB), strokeRGB(strokeRGB), fillOpacity(fillOpacity), strokeOpacity(strokeOpacity), strokeWidth(strokeWidth), transform(transform) {}
 
     virtual void Draw(Graphics& graphics) = 0;
-
 };
 
 class Ellipse_ : public Shape
@@ -539,16 +586,18 @@ class Ellipse_ : public Shape
 protected:
     float cx, cy;
     float rx, ry;
+
 public:
     Ellipse_(float cx, float cy, float rx, float ry, float fillOpacity, float strokeOpacity, float strokeWidth, RGB fill, RGB stroke, Transform transform)
         : Shape(fill, stroke, fillOpacity, strokeOpacity, strokeWidth, transform), cx(cx), cy(cy), rx(rx), ry(ry) {}
 
     virtual void Draw(Graphics& graphics) override
     {
-        GraphicsState state = TransformSVG(graphics, transform);
+
         Pen ellipsePen(Color(255 * strokeOpacity, strokeRGB.r, strokeRGB.g, strokeRGB.b), strokeWidth);
         SolidBrush ellipseBrush(Color(255 * fillOpacity, fillRGB.r, fillRGB.g, fillRGB.b));
 
+        GraphicsState state = TransformSVG(graphics, transform);
         graphics.FillEllipse(&ellipseBrush, cx - rx, cy - ry, 2 * rx, 2 * ry);
         graphics.DrawEllipse(&ellipsePen, cx - rx, cy - ry, 2 * rx, 2 * ry);
         graphics.Restore(state);
@@ -582,7 +631,6 @@ private:
     float x, y, width, height;
 
 public:
-
     Rect_(float x, float y, float width, float height, float fillOpacity, float strokeOpacity, RGB fillRGB, RGB strokeRGB, float strokeWidth, Transform transform)
         : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform), x(x), y(y), width(width), height(height) {}
     virtual void Draw(Graphics& graphics) override
@@ -601,6 +649,7 @@ class Line : public Shape
 {
 private:
     float x1, y1, x2, y2;
+
 public:
     Line(float x1, float y1, float x2, float y2, float strokeOpacity, RGB strokeRGB, float strokeWidth, Transform transform)
         : Shape(strokeOpacity, strokeRGB, strokeWidth, transform), x1(x1), y1(y1), x2(x2), y2(y2) {}
@@ -644,10 +693,11 @@ private:
     float dx, dy;
     float x, y, fontSize;
     string content, fontFamily, textAnchor, fontStyle;
+    bool checkk;
 
 public:
-    Text(float x, float y, const string& content, float fontSize, float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, const string& fontFamily, float dx, float dy, string textAnchor, string fontStyle)
-        : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform), x(x), y(y), fontSize(fontSize), content(content), fontFamily(fontFamily), dx(dx), dy(dy), fontStyle(fontStyle), textAnchor(textAnchor) {}
+    Text(float x, float y, const string& content, float fontSize, float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, const string& fontFamily, float dx, float dy, string textAnchor, string fontStyle, bool checkStroke)
+        : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform), x(x), y(y), fontSize(fontSize), content(content), fontFamily(fontFamily), dx(dx), dy(dy), fontStyle(fontStyle), textAnchor(textAnchor), checkk(checkStroke) {}
 
     virtual void Draw(Graphics& graphics) override
     {
@@ -656,7 +706,7 @@ public:
         wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
         wstring wideFontFamily = converter.from_bytes(fontFamily);
 
-        vector<const wchar_t*> fontList = { L"Arial", L"Tahoma", L"Calibri", L"Lucida Sans", L"Verdana", L"Georgia", L"Helvetica",L"Futura", L"" };
+        vector<const wchar_t*> fontList = { L"Arial", L"Tahoma", L"Calibri", L"Lucida Sans", L"Verdana", L"Georgia", L"Helvetica", L"Futura", L"" };
 
         bool isValid = false;
         HFONT hFont = NULL;
@@ -668,7 +718,8 @@ public:
 
             isValid = IsStringValidForFont(wideFontFamily.c_str(), hFont);
 
-            if (isValid) {
+            if (isValid)
+            {
                 break;
             }
 
@@ -676,10 +727,12 @@ public:
             hFont = NULL;
         }
 
-        if (!isValid) {
+        if (!isValid)
+        {
             fontFamily = "Times New Roman";
             wideFontFamily = L"Times New Roman";
-            if (hFont) {
+            if (hFont)
+            {
                 DeleteObject(hFont);
                 hFont = NULL;
             }
@@ -692,29 +745,31 @@ public:
 
         PointF point;
         StringFormat stringFormat;
-        if (textAnchor == "start") {
+        if (textAnchor == "start")
+        {
             point = PointF(x + dx, y + dy - fontSize);
             stringFormat.SetAlignment(StringAlignmentNear);
             stringFormat.SetLineAlignment(StringAlignmentNear);
         }
-        else if (textAnchor == "middle") {
+        else if (textAnchor == "middle")
+        {
             point = PointF(x + dx - fontSize / 2.0f, y + dy - fontSize / 2.0f);
             stringFormat.SetAlignment(StringAlignmentCenter);
             stringFormat.SetLineAlignment(StringAlignmentCenter);
         }
-        else if (textAnchor == "end") {
+        else if (textAnchor == "end")
+        {
             point = PointF(x + dx - fontSize, y + dy - fontSize);
             stringFormat.SetAlignment(StringAlignmentFar);
             stringFormat.SetLineAlignment(StringAlignmentFar);
         }
-        else {
+        else
+        {
             point = PointF(x + dx - fontSize, y + dy - fontSize);
             stringFormat.SetAlignment(StringAlignmentNear);
             stringFormat.SetLineAlignment(StringAlignmentNear);
-
         }
         wstring text(content.begin(), content.end());
-
 
         GraphicsPath path;
         if (fontStyle == "italic")
@@ -729,12 +784,17 @@ public:
         if (strokeWidth != 0)
         {
             SolidBrush fillBrush(Color(fillRGB.r, fillRGB.g, fillRGB.b));
-            graphics.FillPath(&fillBrush, &path);
-
             Pen pen(Color(strokeRGB.r, strokeRGB.g, strokeRGB.b), strokeWidth);
-            graphics.DrawPath(&pen, &path);
+            if (checkk == 0)
+                graphics.FillPath(&fillBrush, &path);
+            else
+            {
+                graphics.FillPath(&fillBrush, &path);
+                graphics.DrawPath(&pen, &path);
+            }
         }
-        else {
+        else
+        {
             SolidBrush textBrush(Color(fillRGB.r, fillRGB.g, fillRGB.b));
             if (fontStyle == "italic")
             {
@@ -751,7 +811,6 @@ public:
                 Font font(&dynamicFontFamily, fontSize, FontStyleRegular, UnitPixel);
                 graphics.DrawString(text.c_str(), -1, &font, point, &textBrush);
             }
-
         }
         if (hFont)
         {
@@ -767,6 +826,7 @@ class Polyline_ : public Shape
 private:
     string points;
     vector<pair<float, float>> allPoints;
+
 public:
     Polyline_(const string& points, float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform)
         : points(points), Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform)
@@ -777,7 +837,8 @@ public:
     virtual void Draw(Graphics& graphics) override
     {
         vector<PointF> pointsArray;
-        for (const auto& point : allPoints) {
+        for (const auto& point : allPoints)
+        {
             pointsArray.push_back(PointF(static_cast<float>(point.first), static_cast<float>(point.second)));
         }
 
@@ -800,7 +861,6 @@ public:
         }
         graphics.Restore(state);
     }
-
 };
 
 class Polygon_ : public Shape
@@ -808,6 +868,7 @@ class Polygon_ : public Shape
 private:
     string points;
     vector<pair<float, float>> allPoints;
+
 public:
     Polygon_(const string& points, float fillOpacity, float strokeOpacity, RGB fill, RGB stroke, float strokeWidth, Transform transform)
         : points(points), Shape(fill, stroke, fillOpacity, strokeOpacity, strokeWidth, transform)
@@ -823,7 +884,8 @@ public:
 
         vector<PointF> pointsArray;
 
-        for (const auto& point : allPoints) {
+        for (const auto& point : allPoints)
+        {
             pointsArray.push_back(PointF(point.first, point.second));
         }
 
@@ -843,10 +905,9 @@ class ClassPath : public Shape
 {
 private:
     Path path;
-public:
 
-    ClassPath(float fillOpacity, float strokeOpacity, float strokeWidth, RGB fill, RGB stroke, Transform transform, Path path) :
-        Shape(fill, stroke, fillOpacity, strokeOpacity, strokeWidth, transform), path(path) {}
+public:
+    ClassPath(float fillOpacity, float strokeOpacity, float strokeWidth, RGB fill, RGB stroke, Transform transform, Path path) : Shape(fill, stroke, fillOpacity, strokeOpacity, strokeWidth, transform), path(path) {}
 
     virtual void Draw(Graphics& graphics) override
     {
@@ -933,7 +994,7 @@ public:
                 break;
 
             case 'Z':
-            case'z':
+            case 'z':
             {
                 pathToDraw.CloseFigure();
 
@@ -1011,7 +1072,6 @@ private:
     int fontSize;
 
 public:
-
     Group(vector<Shape*>& shapes, float strokeOpacity, float fillOpacity, RGB stroke, RGB fill, float strokeWidth, Transform transform, int fontSize)
         : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform), shapes(shapes), fontSize(fontSize) {}
     virtual void Draw(Graphics& graphics) override
@@ -1026,7 +1086,9 @@ public:
 bool isParsingGroup = false;
 
 vector<bool> checkRGB;
-void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild groupChild) {
+
+void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild groupChild)
+{
 
     string nodeName = node.name();
     static regex rgbRegex("rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
@@ -1039,43 +1101,49 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            fillRGB = { 255, 255, 255 };
         }
-        else if (!fill.empty()) {
+        else if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
         else if (!stroke.empty())
         {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
         }
 
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
 
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
@@ -1084,7 +1152,8 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(circle);
     }
 
-    else if (nodeName == "rect") {
+    else if (nodeName == "rect")
+    {
 
         float x = node.attribute("x").as_float();
         float y = node.attribute("y").as_float();
@@ -1093,44 +1162,49 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            fillRGB = { 255, 255, 255 };
         }
-        else if (!fill.empty()) {
+        else if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
         else if (!stroke.empty())
         {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
         }
 
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
 
-
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
@@ -1148,28 +1222,31 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //Line khong co fill
-       //STROKE
+        // Line khong co fill
+        // STROKE
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
         else if (!stroke.empty())
         {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
         }
 
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
 
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
@@ -1186,9 +1263,11 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         float dx = node.attribute("dx").as_float();
         float dy = node.attribute("dy").as_float();
         string textAnchor = node.attribute("text-anchor").empty()
-            ? "start" : node.attribute("text-anchor").value();
+            ? "start"
+            : node.attribute("text-anchor").value();
         string fontStyle = node.attribute("font-style").empty()
-            ? "normal" : node.attribute("font-style").value();
+            ? "normal"
+            : node.attribute("font-style").value();
 
         // Content extraction
         string content;
@@ -1202,56 +1281,71 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         }
 
         float fontSize = node.attribute("font-size").as_float();
-        if (fontSize == 0) {
+        if (fontSize == 0)
+        {
             fontSize = groupChild.fontSize;
         }
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            fillRGB = { 255, 255, 255 };
         }
-        else if (!fill.empty()) {
+        else if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
+        bool checkk = true;
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
-        else if (!stroke.empty()) {
+        else if (stroke == "")
+        {
+            strokeRGB = { 255, 255, 255 };
+            checkk = 0;
+        }
+        else if (!stroke.empty())
+        {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
         }
 
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
 
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
 
-        //fontFamily
+        // fontFamily
         string fontFamily = node.attribute("font-family").empty()
-            ? "Times New Roman" : node.attribute("font-family").value();
-        Text* text = new Text(x, y, content, fontSize, fillOpacity, strokeOpacity, strokeWidth, fillRGB, strokeRGB, transform, fontFamily, dx, dy, textAnchor, fontStyle);
+            ? "Times New Roman"
+            : node.attribute("font-family").value();
+        Text* text = new Text(x, y, content, fontSize, fillOpacity, strokeOpacity, strokeWidth, fillRGB, strokeRGB, transform, fontFamily, dx, dy, textAnchor, fontStyle, checkk);
         elements.push_back(text);
     }
 
@@ -1261,16 +1355,18 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 256,256,256 };
+            fillRGB = { 256, 256, 256 };
         }
-        else if (!fill.empty()) {
+        else if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
         else
@@ -1278,13 +1374,16 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
-        if (!stroke.empty() && stroke != "none") {
+        if (!stroke.empty() && stroke != "none")
+        {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
         else
@@ -1304,8 +1403,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             }
         }
 
-
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
@@ -1321,24 +1419,30 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
-        if (!fill.empty()) {
+        if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
-        if (!stroke.empty()) {
+        if (!stroke.empty())
+        {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
         else
@@ -1358,7 +1462,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             }
         }
 
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
@@ -1376,42 +1480,49 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB, strokeRGB;
         smatch matches;
 
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            fillRGB = { 255, 255, 255 };
         }
-        else if (!fill.empty()) {
+        else if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
-        else if (!stroke.empty()) {
+        else if (!stroke.empty())
+        {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
         }
 
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
 
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
@@ -1420,50 +1531,58 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(ellipse);
     }
 
-    else if (nodeName == "path") {
+    else if (nodeName == "path")
+    {
         RGB fillRGB, strokeRGB;
         smatch matches;
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+            ? groupChild.fillOpacity
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            fillRGB = { 255, 255, 255 };
         }
-        else if (!fill.empty()) {
+        else if (!fill.empty())
+        {
             convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         }
-        else {
+        else
+        {
             fillRGB = groupChild.fillRGB;
         }
 
-        //STROKE
+        // STROKE
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+            ? groupChild.strokeOpacity
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
-        else if (!stroke.empty()) {
+        else if (!stroke.empty())
+        {
             convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
         }
-        else {
+        else
+        {
             strokeRGB = groupChild.strokeRGB;
             if (groupChild.strokeRGB.r == groupChild.strokeRGB.g == groupChild.strokeRGB.b == strokeRGB.r == strokeRGB.g == strokeRGB.b)
                 strokeOpacity = 0;
         }
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransformChild(transformValue, transform, groupChild);
 
-        //Path
+        // Path
         Path path_;
         string pathValue = node.attribute("d").value();
         convertPathToValue(pathValue, path_);
@@ -1471,8 +1590,10 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(path);
     }
 
-    else if (nodeName == "g") {
-        if (isParsingGroup) {
+    else if (nodeName == "g")
+    {
+        if (isParsingGroup)
+        {
             return;
         }
         isParsingGroup = true;
@@ -1481,28 +1602,30 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         smatch matches;
 
         float fontSize = node.attribute("font-size").as_float();
-        //FILL
+        // FILL
         float fillOpacity = node.attribute("fill-opacity").empty()
-            ? 1 : node.attribute("fill-opacity").as_float();
+            ? 1
+            : node.attribute("fill-opacity").as_float();
         string fill = node.attribute("fill").value();
         if (fill == "none")
         {
             fillOpacity = 0;
-            fillRGB = { 255,255,255 };
+            fillRGB = { 255, 255, 255 };
         }
         convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
         if (!fill.empty())
         {
             groupChild.fillRGB = fillRGB;
         }
-        //STROKE
+        // STROKE
         float strokeOpacity = node.attribute("stroke-opacity").empty()
-            ? 1 : node.attribute("stroke-opacity").as_float();
+            ? 1
+            : node.attribute("stroke-opacity").as_float();
         string stroke = node.attribute("stroke").value();
         if (stroke == "none")
         {
             strokeOpacity = 0;
-            strokeRGB = { 255,255,255 };
+            strokeRGB = { 255, 255, 255 };
         }
 
         convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
@@ -1511,13 +1634,14 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
             groupChild.strokeRGB = strokeRGB;
         }
         float strokeWidth = node.attribute("stroke-width").empty()
-            ? groupChild.strokeWidth : node.attribute("stroke-width").as_float();
+            ? groupChild.strokeWidth
+            : node.attribute("stroke-width").as_float();
 
-        //TRANSFORM
+        // TRANSFORM
         string transformValue = node.attribute("transform").value();
         Transform transform = { 0, 0, 0, 1.0, 1.0 };
         parseTransform(transformValue, transform);
-        //groupChild.transform = transform;
+        // groupChild.transform = transform;
         groupChild.transform.translateX += transform.translateX;
         groupChild.transform.translateY += transform.translateY;
         groupChild.transform.rotateAngle += transform.rotateAngle;
@@ -1536,7 +1660,6 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         Group* group = new Group(groupElements, strokeOpacity, fillOpacity, strokeRGB, fillRGB, strokeWidth, transform, fontSize);
         elements.push_back(group);
     }
-
 }
 
 void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
@@ -1561,33 +1684,36 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 string stroke = elementNode.attribute("stroke").value();
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 if (stroke == "none")
                 {
                     strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
@@ -1596,7 +1722,8 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 elements.push_back(circle);
             }
 
-            else if (elementName == "rect") {
+            else if (elementName == "rect")
+            {
 
                 float x = elementNode.attribute("x").as_float();
                 float y = elementNode.attribute("y").as_float();
@@ -1605,33 +1732,36 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none")
                 {
                     strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
@@ -1649,22 +1779,24 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
-                //Line khong co fill
-                //STROKE
+                // Line khong co fill
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none")
                 {
                     strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
@@ -1681,9 +1813,11 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 float dx = elementNode.attribute("dx").as_float();
                 float dy = elementNode.attribute("dy").as_float();
                 string textAnchor = elementNode.attribute("text-anchor").empty()
-                    ? "start" : elementNode.attribute("text-anchor").value();
+                    ? "start"
+                    : elementNode.attribute("text-anchor").value();
                 string fontStyle = elementNode.attribute("font-style").empty()
-                    ? "normal" : elementNode.attribute("font-style").value();
+                    ? "normal"
+                    : elementNode.attribute("font-style").value();
 
                 // Content extraction
                 string content;
@@ -1702,41 +1836,51 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
 
                 // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
                 // STROKE
+                bool checkk = true;
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none")
                 {
-                    strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeOpacity = 1;
+                    strokeRGB = { 255, 255, 255 };
+                }
+                else if (stroke == "")
+                {
+                    strokeRGB = { 255, 255, 255 };
+                    checkk = 0;
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
 
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
 
-                //fontFamily
+                // fontFamily
                 string fontFamily = elementNode.attribute("font-family").empty()
-                    ? "Times New Roman" : elementNode.attribute("font-family").value();
+                    ? "Times New Roman"
+                    : elementNode.attribute("font-family").value();
 
-                Text* text = new Text(x, y, content, fontSize, fillOpacity, strokeOpacity, strokeWidth, fillRGB, strokeRGB, transform, fontFamily, dx, dy, textAnchor, fontStyle);
+                Text* text = new Text(x, y, content, fontSize, fillOpacity, strokeOpacity, strokeWidth, fillRGB, strokeRGB, transform, fontFamily, dx, dy, textAnchor, fontStyle, checkk);
                 elements.push_back(text);
             }
 
@@ -1746,33 +1890,36 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 256,256,256 };
+                    fillRGB = { 256, 256, 256 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none")
                 {
                     strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
@@ -1788,31 +1935,35 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
-                if (stroke == "none") {
-                    strokeRGB = { 255,255,255 };
+                if (stroke == "none")
+                {
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
@@ -1830,33 +1981,36 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 RGB fillRGB, strokeRGB;
                 smatch matches;
 
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none")
                 {
                     strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
@@ -1865,42 +2019,45 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 elements.push_back(ellipse);
             }
 
-            else if (elementName == "path") {
+            else if (elementName == "path")
+            {
                 RGB fillRGB, strokeRGB;
                 smatch matches;
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 255,255,255 };
+                    fillRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 if (stroke == "none" || stroke == "")
                 {
                     strokeOpacity = 0;
-                    strokeRGB = { 255,255,255 };
+                    strokeRGB = { 255, 255, 255 };
                 }
                 else
                     convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
 
-                //Path
+                // Path
                 Path path_;
                 string pathValue = elementNode.attribute("d").value();
                 convertPathToValue(pathValue, path_);
@@ -1914,24 +2071,26 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 groupChild groupChild_;
                 smatch matches;
 
-                //FONT SIZE               
+                // FONT SIZE
                 float fontSize = elementNode.attribute("font-size").as_float();
 
-                //FILL
+                // FILL
                 float fillOpacity = elementNode.attribute("fill-opacity").empty()
-                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("fill-opacity").as_float();
                 string fill = elementNode.attribute("fill").value();
                 if (fill == "none")
                 {
                     fillOpacity = 0;
-                    fillRGB = { 256,256,256 };
+                    fillRGB = { 256, 256, 256 };
                 }
                 else
                     convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
 
-                //STROKE
+                // STROKE
                 float strokeOpacity = elementNode.attribute("stroke-opacity").empty()
-                    ? 1 : elementNode.attribute("stroke-opacity").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-opacity").as_float();
                 string stroke = elementNode.attribute("stroke").value();
                 convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 if (stroke == "")
@@ -1945,14 +2104,15 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                     checkRGB.push_back(checked);
                 }
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
-                    ? 1 : elementNode.attribute("stroke-width").as_float();
+                    ? 1
+                    : elementNode.attribute("stroke-width").as_float();
 
-                //TRANSFORM
+                // TRANSFORM
                 string transformValue = elementNode.attribute("transform").value();
                 Transform transform = { 0, 0, 0, 1.0, 1.0 };
                 parseTransform(transformValue, transform);
 
-                //push group child elements
+                // push group child elements
                 groupChild_.fillOpacity = fillOpacity;
                 groupChild_.strokeOpacity = strokeOpacity;
                 groupChild_.fillRGB = fillRGB;
@@ -1978,76 +2138,94 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
 
 string GetClassName(Shape* element)
 {
-    if (dynamic_cast<Circle*>(element) != NULL) {
+    if (dynamic_cast<Circle*>(element) != NULL)
+    {
         return "Circle";
     }
-    else if (dynamic_cast<Rect_*>(element) != NULL) {
+    else if (dynamic_cast<Rect_*>(element) != NULL)
+    {
         return "Rect";
     }
-    else if (dynamic_cast<Line*>(element) != NULL) {
+    else if (dynamic_cast<Line*>(element) != NULL)
+    {
         return "Line";
     }
-    else if (dynamic_cast<Text*>(element) != NULL) {
+    else if (dynamic_cast<Text*>(element) != NULL)
+    {
         return "Text";
     }
-    else if (dynamic_cast<Polyline_*>(element) != NULL) {
+    else if (dynamic_cast<Polyline_*>(element) != NULL)
+    {
         return "Polyline";
     }
-    else if (dynamic_cast<Polygon_*>(element) != NULL) {
+    else if (dynamic_cast<Polygon_*>(element) != NULL)
+    {
         return "Polygon";
     }
-    else if (dynamic_cast<Ellipse_*>(element) != NULL) {
+    else if (dynamic_cast<Ellipse_*>(element) != NULL)
+    {
         return "Ellipse";
     }
-    else if (dynamic_cast<ClassPath*>(element) != NULL) {
+    else if (dynamic_cast<ClassPath*>(element) != NULL)
+    {
         return "Path";
     }
-    if (dynamic_cast<Group*>(element) != NULL) {
+    if (dynamic_cast<Group*>(element) != NULL)
+    {
         return "Group";
     }
+    return "Shape";
 }
+
 
 VOID OnPaint(HDC hdc)
 {
     Graphics graphics(hdc);
     ZoomGraphics(graphics, zoomScale);
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-
     vector<Shape*> elements;
-    parseAndRenderSVG("svg-08.svg", elements);
+    parseAndRenderSVG(svg-16.svg, elements);
 
     for (const auto& element : elements)
     {
         string className = GetClassName(element);
-        if (className == "Circle") {
+        if (className == "Circle")
+        {
             Circle* circle = dynamic_cast<Circle*>(element);
             circle->Draw(graphics);
         }
-        else if (className == "Rect") {
+        else if (className == "Rect")
+        {
             Rect_* rect = dynamic_cast<Rect_*>(element);
             rect->Draw(graphics);
         }
-        else if (className == "Line") {
+        else if (className == "Line")
+        {
             Line* line = dynamic_cast<Line*>(element);
             line->Draw(graphics);
         }
-        else if (className == "Text") {
+        else if (className == "Text")
+        {
             Text* text = dynamic_cast<Text*>(element);
             text->Draw(graphics);
         }
-        else if (className == "Polyline") {
+        else if (className == "Polyline")
+        {
             Polyline_* polyline = dynamic_cast<Polyline_*>(element);
             polyline->Draw(graphics);
         }
-        else if (className == "Polygon") {
+        else if (className == "Polygon")
+        {
             Polygon_* polygon = dynamic_cast<Polygon_*>(element);
             polygon->Draw(graphics);
         }
-        else if (className == "Ellipse") {
+        else if (className == "Ellipse")
+        {
             Ellipse_* ellipse = dynamic_cast<Ellipse_*>(element);
             ellipse->Draw(graphics);
         }
-        else if (className == "Path") {
+        else if (className == "Path")
+        {
             ClassPath* path = dynamic_cast<ClassPath*>(element);
             path->Draw(graphics);
         }
@@ -2064,10 +2242,11 @@ int lastMouseY = 0;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HDC          hdc;
-    PAINTSTRUCT  ps;
+    HDC hdc;
+    PAINTSTRUCT ps;
 
-    switch (message) {
+    switch (message)
+    {
     case WM_PAINT:
         hdc = BeginPaint(hWnd, &ps);
         OnPaint(hdc);
@@ -2084,12 +2263,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (zoomScale < 0.1f)
             zoomScale = 0.1f;
 
-
         InvalidateRect(hWnd, NULL, TRUE);
         return 0;
     }
-    case WM_MOUSEMOVE: {
-        if (wParam & MK_LBUTTON) {
+    case WM_MOUSEMOVE:
+    {
+        if (wParam & MK_LBUTTON)
+        {
             int mouseX = GET_X_LPARAM(lParam);
             int mouseY = GET_Y_LPARAM(lParam);
 
@@ -2113,34 +2293,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
 } // WndProc
 
-INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, INT iCmdShow)
 {
-    HWND                hWnd;
-    MSG                 msg;
-    WNDCLASS            wndClass;
+    HWND hWnd;
+    MSG msg;
+    WNDCLASS wndClass;
     GdiplusStartupInput gdiplusStartupInput;
-    ULONG_PTR           gdiplusToken;
-
-    xml_document<> doc;
-    xml_node<>* rootNode;
-
-    ifstream file("svg-16.svg");
-    vector<char> buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-    buffer.push_back('\0');
-
-    doc.parse<0>(&buffer[0]);
-
-    rootNode = doc.first_node();
-    xml_node<>* node = rootNode->first_node();
-
-    while (node != NULL) {
-        char* nodeName = node->name();
-        xml_attribute<>* firstAttribute = node->first_attribute();
-        char* attributeName = firstAttribute->name();
-        char* attributeValue = firstAttribute->value();
-        xml_attribute<>* secondAttribute = firstAttribute->next_attribute();
-        node = node->next_sibling();
-    }
+    ULONG_PTR gdiplusToken;
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     wndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -2156,25 +2315,26 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, INT iCmdShow)
 
     RegisterClass(&wndClass);
     hWnd = CreateWindow(
-        TEXT("GettingStarted"),   // window class name
-        TEXT("SVG Demo"),  // window caption
-        WS_OVERLAPPEDWINDOW,      // window style
-        CW_USEDEFAULT,            // initial x position
-        CW_USEDEFAULT,            // initial y position
-        CW_USEDEFAULT,            // initial x size
-        CW_USEDEFAULT,            // initial y size
-        NULL,                     // parent window handle
-        NULL,                     // window menu handle
-        hInstance,                // program instance handle
-        NULL);                    // creation parameters
+        TEXT("GettingStarted"), // window class name
+        TEXT("SVG Demo"),       // window caption
+        WS_OVERLAPPEDWINDOW,    // window style
+        CW_USEDEFAULT,          // initial x position
+        CW_USEDEFAULT,          // initial y position
+        CW_USEDEFAULT,          // initial x size
+        CW_USEDEFAULT,          // initial y size
+        NULL,                   // parent window handle
+        NULL,                   // window menu handle
+        hInstance,              // program instance handle
+        NULL);                  // creation parameters
 
     ShowWindow(hWnd, iCmdShow);
     UpdateWindow(hWnd);
 
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
     GdiplusShutdown(gdiplusToken);
     return msg.wParam;
-}  // WinMain
+} // WinMain
