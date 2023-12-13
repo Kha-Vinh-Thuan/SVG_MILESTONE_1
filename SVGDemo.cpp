@@ -2177,6 +2177,7 @@ string GetClassName(Shape* element)
     return "Shape";
 }
 
+string filename = "sample.svg";
 
 VOID OnPaint(HDC hdc)
 {
@@ -2184,7 +2185,7 @@ VOID OnPaint(HDC hdc)
     ZoomGraphics(graphics, zoomScale);
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
     vector<Shape*> elements;
-    parseAndRenderSVG(svg-16.svg, elements);
+    parseAndRenderSVG(filename, elements);
 
     for (const auto& element : elements)
     {
@@ -2295,6 +2296,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, INT iCmdShow)
 {
+    int argc;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    wstring wide_filename;
+    if (argc > 1)
+    {
+        wide_filename = argv[1];
+        filename = string(wide_filename.begin(), wide_filename.end());
+    }
+    LocalFree(argv);
+
     HWND hWnd;
     MSG msg;
     WNDCLASS wndClass;
