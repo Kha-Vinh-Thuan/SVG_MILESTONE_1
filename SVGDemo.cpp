@@ -538,27 +538,6 @@ void ZoomGraphics(Graphics& graphics, float scale)
     graphics.ScaleTransform(scale, scale);
 }
 
-GraphicsState TransformSVG(Graphics& graphics, Transform transform)
-{
-    GraphicsState state = graphics.Save();
-    Matrix transformMatrix;
-
-    for (const string& operation : transform.transformOrder)
-    {
-        if (operation == "scale")
-            if (checkScale)
-                transformMatrix.Scale(transform.scaleX, transform.scaleX);
-            else
-                transformMatrix.Scale(transform.scaleX, transform.scaleY);
-        else if (operation == "translate")
-            transformMatrix.Translate(transform.translateX, transform.translateY);
-        else if (operation == "rotate")
-            transformMatrix.Rotate(transform.rotateAngle);
-    }
-    graphics.MultiplyTransform(&transformMatrix);
-    return state;
-}
-
 class Shape
 {
 protected:
@@ -577,6 +556,27 @@ public:
 
     Shape(RGB fillRGB, RGB strokeRGB, float fillOpacity, float strokeOpacity, float strokeWidth, Transform transform)
         : fillRGB(fillRGB), strokeRGB(strokeRGB), fillOpacity(fillOpacity), strokeOpacity(strokeOpacity), strokeWidth(strokeWidth), transform(transform) {}
+
+    GraphicsState TransformSVG(Graphics& graphics, Transform transform)
+    {
+        GraphicsState state = graphics.Save();
+        Matrix transformMatrix;
+
+        for (const string& operation : transform.transformOrder)
+        {
+            if (operation == "scale")
+                if (checkScale)
+                    transformMatrix.Scale(transform.scaleX, transform.scaleX);
+                else
+                    transformMatrix.Scale(transform.scaleX, transform.scaleY);
+            else if (operation == "translate")
+                transformMatrix.Translate(transform.translateX, transform.translateY);
+            else if (operation == "rotate")
+                transformMatrix.Rotate(transform.rotateAngle);
+        }
+        graphics.MultiplyTransform(&transformMatrix);
+        return state;
+    }
 
     virtual void Draw(Graphics& graphics) = 0;
 };
@@ -2177,7 +2177,7 @@ string GetClassName(Shape* element)
     return "Shape";
 }
 
-string filename = "svg-18.svg";
+string filename = "svg-16.svg";
 
 VOID OnPaint(HDC hdc)
 {
