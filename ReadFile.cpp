@@ -1189,7 +1189,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
     }
 }
 
-void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements, vector<Defs*>& elements_defs)
+void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements, vector<Defs*>& elements_defs, ViewBox*& viewBox)
 {
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(filePath.c_str());
@@ -1868,4 +1868,4 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements, vector<
             }
         }
     }
-}
+}	
