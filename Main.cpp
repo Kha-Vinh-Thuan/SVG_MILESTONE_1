@@ -1,4 +1,4 @@
-﻿#include "ReadFile.h"
+#include "ReadFile.h"
 string filename = "sample.svg";
 
 
@@ -7,11 +7,54 @@ float offsetX = 0.0f;
 float offsetY = 0.0f;
 
 
-void ZoomGraphics(Graphics& graphics, float scale_)
+void ViewBox::DrawViewBox()
 {
+    if (width_out == 0 || height_out == 0)
+    {
+        width_out = 800;
+        height_out = 600;
+    }
+    float scaleX_ = 1, scaleY_ = 1;
+
+    if (width_out != 0 && height_out != 0 && width_in != 0 && height_in != 0)
+    {
+        scaleX_ = width_out / width_in;
+        scaleY_ = height_out / height_in;
+        scale = ((scaleX_ < scaleY_) ? scaleX_ : scaleY_);
+    }
+    static bool loop = true;
+    if (loop && width_in != 0 && height_in != 0)
+    {
+        offsetX += abs(width_out - width_in * scale) / 2;
+        offsetY += abs(height_out - height_in * scale) / 2;
+        loop = false;
+    }
+
+}
+void ZoomGraphics(Graphics& graphics, float scale_, float scale_viewbox, float width_out, float height_out)
+{
+    if (scale_viewbox == 1 && width_out == 0 && height_out == 0)
+    {
         graphics.ResetTransform();
         graphics.TranslateTransform(offsetX, offsetY);
-        graphics.ScaleTransform(scale_, scale_);
+        graphics.ScaleTransform(scale_ , scale_);
+    }
+    else
+    {
+        graphics.ResetTransform();
+        graphics.TranslateTransform(offsetX, offsetY);
+
+        float clippedWidth = width_out / scale_;
+        float clippedHeight = height_out / scale_;
+        float clippedX = ((width_out - clippedWidth) / 2) - offsetX;
+        float clippedY = ((height_out - clippedHeight) / 2) - offsetY;
+
+        Pen blackPen(Color(0, 0, 0), 1.0f);
+        graphics.DrawRectangle(&blackPen, clippedX, clippedY, clippedWidth, clippedHeight);
+        graphics.SetClip(RectF(clippedX, clippedY, clippedWidth, clippedHeight));
+
+        graphics.ScaleTransform(scale_ * scale_viewbox, scale_ * scale_viewbox);
+    }
 }
 
 string GetClassName(Shape* element)
@@ -61,9 +104,23 @@ VOID OnPaint(HDC hdc)
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
     vector<Shape*> elements;
     vector<Defs*> elements_defs;
+    ViewBox* viewBox = new ViewBox(0, 0, 0, 0, 0, 0, 1);
+ 
+    parseAndRenderSVG(filename, elements, elements_defs, viewBox);
+    bool check_view = viewBox->getcheck();
+    if (check_view == 1)
+    {
+        viewBox->DrawViewBox();
+        float scale_view_box = viewBox->getScale();
+        float width_OUT = viewBox->getWidthOut();
+        float height_OUT = viewBox->getHeightOut();
+        ZoomGraphics(graphics, zoomScale, scale_view_box, width_OUT, height_OUT);
+    }
+    else
+    {
+        ZoomGraphics(graphics, zoomScale, 1, 0, 0);
+    }
 
-    parseAndRenderSVG(filename, elements, elements_defs);
-        ZoomGraphics(graphics, zoomScale);
 
     for (const auto& element : elements)
     {

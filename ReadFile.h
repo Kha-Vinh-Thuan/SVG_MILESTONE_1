@@ -10,6 +10,7 @@
 #include "Polyline.h"
 #include "Text.h"
 #include "Defs.h"
+#include "Viewbox.h"
 string chuanhoa(string);
 
 void getNextNumberOfValues(string&, int&, int, Path&, char);
@@ -36,7 +37,6 @@ void parseTransformChild(const string&, Transform&, groupChild&);
 
 void parseSVGNode(pugi::xml_node&, vector<Shape*>&, groupChild);
 
-void parseAndRenderSVG(const string&, vector<Shape*>&, vector<Defs*>&);
-
+void parseAndRenderSVG(const string&, vector<Shape*>&, vector<Defs*>&, ViewBox*& viewBox);
 
 #endif // !READFILE_H
