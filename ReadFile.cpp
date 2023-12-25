@@ -164,7 +164,7 @@ string toLower(string s)
     return s;
 }
 
-
+void convert_letters_to_RGB(RGB& rgb, string s)
 {
     map<string, RGB> colorMap =
     {
@@ -584,7 +584,40 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(circle);
     }
 
-    
+    else if (nodeName == "rect")
+    {
+
+        float x = node.attribute("x").as_float();
+        float y = node.attribute("y").as_float();
+        float width = node.attribute("width").as_float();
+        float height = node.attribute("height").as_float();
+        RGB fillRGB = { 0, 0, 0 };
+        RGB strokeRGB = { 0, 0, 0 };
+        smatch matches;
+
+        //FILL
+        float fillOpacity = node.attribute("fill-opacity").empty()
+            ? groupChild.fillOpacity : node.attribute("fill-opacity").as_float();
+        string fill = node.attribute("fill").value();
+        if (fill == "none")
+        {
+            fillOpacity = 0;
+            fillRGB = { 255, 255, 255 };
+        }
+        else if (!fill.empty()) {
+            if (fill.find("url") == string::npos) {
+                fill = convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
+            }
+            else {
+                int hashtagPos = fill.find("#");
+                int stopPos = fill.find(")");
+                fill = fill.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+            }
+        }
+        else {
+            fillRGB = groupChild.fillRGB;
+        }
+
         //STROKE
         float strokeOpacity = node.attribute("stroke-opacity").empty()
             ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
@@ -621,7 +654,37 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         elements.push_back(rect);
     }
 
-    
+    else if (nodeName == "line")
+    {
+        float x1 = node.attribute("x1").as_float();
+        float y1 = node.attribute("y1").as_float();
+        float x2 = node.attribute("x2").as_float();
+        float y2 = node.attribute("y2").as_float();
+        RGB fillRGB = { 0, 0, 0 };
+        RGB strokeRGB = { 0, 0, 0 };
+        smatch matches;
+
+        // Line khong co fill
+        //STROKE
+        float strokeOpacity = node.attribute("stroke-opacity").empty()
+            ? groupChild.strokeOpacity : node.attribute("stroke-opacity").as_float();
+        string stroke = node.attribute("stroke").value();
+        if (stroke == "none")
+        {
+            strokeOpacity = 0;
+            strokeRGB = { 255, 255, 255 };
+        }
+        else if (!stroke.empty())
+        {
+            if (stroke.find("url") == string::npos) {
+                stroke = convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
+            }
+            else if (!stroke.empty()) {
+                int hashtagPos = stroke.find("#");
+                int stopPos = stroke.find(")");
+                stroke = stroke.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+            }
+        }
         else {
             strokeRGB = groupChild.strokeRGB;
         }
@@ -1126,13 +1189,35 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
     }
 }
 
-void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
+void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements, vector<Defs*>& elements_defs)
 {
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(filePath.c_str());
     static regex rgbRegex("rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
 
-  
+    if (result)
+    {
+        pugi::xml_node svgNode = doc.child("svg");
+        string viewboxValue = svgNode.attribute("viewBox").value();
+        bool check_viewbox = true;
+        float x = 0, y = 0, width_in = 0, height_in = 0;
+        if (viewboxValue == "")
+        {
+            check_viewbox = 0;
+        }
+        else
+        {
+            istringstream iss(viewboxValue);
+            iss >> x >> y >> width_in >> height_in;
+        }
+        float width_out = svgNode.attribute("width").as_float();
+        float height_out = svgNode.attribute("height").as_float();
+
+        *viewBox = ViewBox(x, y, width_in, height_in, width_out, height_out, check_viewbox);
+        for (pugi::xml_node elementNode : svgNode.children())
+        {
+            string elementName = elementNode.name();
+
             if (elementName == "circle")
             {
                 float cx = elementNode.attribute("cx").as_float();
@@ -1197,7 +1282,27 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 elements.push_back(circle);
             }
 
-       
+            else if (elementName == "rect")
+            {
+
+                float x = elementNode.attribute("x").as_float();
+                float y = elementNode.attribute("y").as_float();
+                float width = elementNode.attribute("width").as_float();
+                float height = elementNode.attribute("height").as_float();
+                RGB fillRGB = { 0, 0, 0 };
+                RGB strokeRGB = { 0, 0, 0 };
+                smatch matches;
+
+                //FILL
+                float fillOpacity = elementNode.attribute("fill-opacity").empty()
+                    ? 1 : elementNode.attribute("fill-opacity").as_float();
+
+                string fill = elementNode.attribute("fill").value();
+                if (fill == "none")
+                {
+                    fillOpacity = 0;
+                    fillRGB = { 255, 255, 255 };
+                }
                 else if (fill.find("url") == string::npos) {
                     fill = convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
                 }
@@ -1267,7 +1372,11 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 else if (stroke.find("url") == string::npos) {
                     stroke = convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 }
-                else 
+                else if (!stroke.empty()) {
+                    int hashtagPos = stroke.find("#");
+                    int stopPos = stroke.find(")");
+                    stroke = stroke.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+                }
 
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
                     ? 1 : elementNode.attribute("stroke-width").as_float();
@@ -1301,7 +1410,14 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
 
                 // Content extraction
                 string content;
-               
+                for (pugi::xml_node child = elementNode.first_child(); child; child = child.next_sibling())
+                {
+                    if (child.type() == pugi::node_pcdata)
+                    {
+                        content = child.value();
+                        break;
+                    }
+                }
 
                 float fontSize = elementNode.attribute("font-size").as_float();
                 RGB fillRGB = { 0, 0, 0 };
@@ -1341,7 +1457,13 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 else if (stroke.find("url") == string::npos) {
                     stroke = convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
                 }
-               
+                else if (!stroke.empty()) {
+                    int hashtagPos = stroke.find("#");
+                    int stopPos = stroke.find(")");
+                    stroke = stroke.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+                    strokeRGB = { 255, 255, 255 };
+                    checkk = 0;
+                }
 
                 float strokeWidth = elementNode.attribute("stroke-width").empty()
                     ? 1 : elementNode.attribute("stroke-width").as_float();
@@ -1694,7 +1816,56 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements)
                 Group* group = new Group(shapes, strokeOpacity, fillOpacity, strokeRGB, fillRGB, strokeWidth, transform, fontSize, fill, stroke);
                 elements.push_back(group);
             }
-
+            else if (elementName == "defs") {
+                vector<LinearGradient*> lg_list;
+                vector<RadialGradient*> rg_list;
+                for (pugi::xml_node& childNode : elementNode.children())
+                {
+                    string nodeName = childNode.name();
+                    if (nodeName == "linearGradient") {
+                        vector<Stop*> stop_list;
+                        pointLinearGradient point;
+                        string id = childNode.attribute("id").value();
+                        string gradientUnits = childNode.attribute("gradientUnits").value();
+                        string spreadMethod = childNode.attribute("spreadMethod").value();
+                        point.x1 = childNode.attribute("x1").as_float();
+                        point.x2 = childNode.attribute("x2").as_float();
+                        point.y1 = childNode.attribute("y1").as_float();
+                        point.y2 = childNode.attribute("y2").as_float();
+                        for (pugi::xml_node& grandNode : childNode.children()) {
+                            string grandName = grandNode.name();
+                            if (grandName == "stop") {
+                                float offset = grandNode.attribute("offset").empty()
+                                    ? 0 : grandNode.attribute("offset").as_float();
+                                float stopOpacity = grandNode.attribute("stop-opacity").empty()
+                                    ? 1 : grandNode.attribute("stop-opacity").as_float();
+                                RGB stopColor;
+                                smatch matches;
+                                string stopColorValue = grandNode.attribute("stop-color").value();
+                                convert_String_to_RGB(stopColor, stopColorValue, matches, rgbRegex);
+                                Stop* stop = new Stop(offset, stopOpacity, stopColor);
+                                stop_list.push_back(stop);
+                            }
+                        }
+                        LinearGradient* linearGradient = new LinearGradient(id, point, spreadMethod, gradientUnits, stop_list);
+                        lg_list.push_back(linearGradient);
+                    }
+                    /* else if (nodeName == "radialGradient") {
+                         string id = childNode.attribute("id").value();
+                         float cx = childNode.attribute("cx").as_float();
+                         float cy = childNode.attribute("cy").as_float();
+                         float r = childNode.attribute("r").as_float();
+                         string gradientUnits = childNode.attribute("gradientUnits").value();
+                         string xlink_href = childNode.attribute("xlink:href").value();
+                         float fx = childNode.attribute("fx").as_float();
+                         float fy = childNode.attribute("fy").as_float();
+                         RadialGradient* radialGradient = new RadialGradient(id, cx, cy, r, gradientUnits, xlink_href, fx, fy);
+                         rg_list.push_back(radialGradient);
+                     }*/
+                }
+                Defs* defs = new Defs(lg_list, rg_list);
+                elements_defs.push_back(defs);
+            }
         }
     }
 }
