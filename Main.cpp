@@ -7,13 +7,11 @@ float offsetX = 0.0f;
 float offsetY = 0.0f;
 
 
-
-void ZoomGraphics(Graphics& graphics, float scale_, float scale_viewbox, float width_out, float height_out)
+void ZoomGraphics(Graphics& graphics, float scale_)
 {
-    
         graphics.ResetTransform();
         graphics.TranslateTransform(offsetX, offsetY);
-        graphics.ScaleTransform(scale_ , scale_);
+        graphics.ScaleTransform(scale_, scale_);
 }
 
 string GetClassName(Shape* element)
@@ -62,23 +60,10 @@ VOID OnPaint(HDC hdc)
     Graphics graphics(hdc);
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
     vector<Shape*> elements;
-    ViewBox* viewBox = new ViewBox(0, 0, 0, 0, 0, 0, 1);
- 
-    parseAndRenderSVG(filename, elements;)
-    bool check_view = viewBox->getcheck();
-    if (check_view == 1)
-    {
-        viewBox->DrawViewBox();
-        float scale_view_box = viewBox->getScale();
-        float width_OUT = viewBox->getWidthOut();
-        float height_OUT = viewBox->getHeightOut();
-        ZoomGraphics(graphics, zoomScale, scale_view_box, width_OUT, height_OUT);
-    }
-    else
-    {
-        ZoomGraphics(graphics, zoomScale, 1, 0, 0);
-    }
+    vector<Defs*> elements_defs;
 
+    parseAndRenderSVG(filename, elements, elements_defs);
+        ZoomGraphics(graphics, zoomScale);
 
     for (const auto& element : elements)
     {
