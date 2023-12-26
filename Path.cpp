@@ -109,10 +109,12 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             if (j + 5 < path.value.size())
             {
                 pathToDraw.GetLastPoint(&lastPoint);
+
                 pathToDraw.AddBezier(lastPoint.X, lastPoint.Y, path.value[j], path.value[j + 1],
                     path.value[j + 2], path.value[j + 3], path.value[j + 4], path.value[j + 5]);
-                lastBezier.X = path.value[j + 4];
-                lastBezier.Y = path.value[j + 5];
+
+                lastBezier.X = path.value[j + 2];
+                lastBezier.Y = path.value[j + 3];
                 j += 6;
             }
             break;
@@ -122,6 +124,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             if (j + 5 < path.value.size())
             {
                 pathToDraw.GetLastPoint(&lastPoint);
+
                 pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
                     lastPoint.X + path.value[j], lastPoint.Y + path.value[j + 1],
                     lastPoint.X + path.value[j + 2], lastPoint.Y + path.value[j + 3],
@@ -134,27 +137,8 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             }
             break;
         }
-
-        case 'S':
-        {
-            if (j + 3 < path.value.size())
-            {
-                pathToDraw.GetLastPoint(&lastPoint);
-
-                float control1X = lastPoint.X ;
-                float control1Y = lastPoint.Y ;
-
-                pathToDraw.AddBezier(lastPoint.X, lastPoint.Y, control1X, control1Y,
-                    path.value[j], path.value[j + 1],
-                    path.value[j + 2], path.value[j + 3]);
-
-                lastBezier.X = path.value[j ];
-                lastBezier.Y = path.value[j + 1];
-                j += 4;
-            }
-            break;
-        }
         case 's':
+        case 'S':
         {
             if (j + 3 < path.value.size())
             {
@@ -171,14 +155,26 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                     control1X = 2.0f * lastPoint.X - lastBezier.X;
                     control1Y = 2.0f * lastPoint.Y - lastBezier.Y;
                 }
-                pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
-                     control1X, control1Y,
-                    lastPoint.X + path.value[j], lastPoint.Y + path.value[j + 1],
-                    lastPoint.X + path.value[j + 2], lastPoint.Y + path.value[j + 3]);
+                
+                if (pathType == 's')
+                {
+                    pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
+                        control1X, control1Y,
+                        lastPoint.X + path.value[j], lastPoint.Y + path.value[j + 1],
+                        lastPoint.X + path.value[j + 2], lastPoint.Y + path.value[j + 3]);
 
-                lastBezier.X = lastPoint.X + path.value[j];
-                lastBezier.Y = lastPoint.Y + path.value[j + 1];
+                    lastBezier.X = lastPoint.X + path.value[j];
+                    lastBezier.Y = lastPoint.Y + path.value[j + 1];
+                }
+                else
+                {
+                    pathToDraw.AddBezier(lastPoint.X, lastPoint.Y, control1X, control1Y,
+                        path.value[j], path.value[j + 1],
+                        path.value[j + 2], path.value[j + 3]);
 
+                    lastBezier.X = path.value[j];
+                    lastBezier.Y = path.value[j + 1];
+                }
                 j += 4;
             }
             break;
@@ -223,12 +219,12 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             break;
         }
 
+        case 't':
         case 'T':
         {
             if (j + 1 < path.value.size())
             {
                 pathToDraw.GetLastPoint(&lastPoint);
-
                 float control1X, control1Y;
                 if (lastBezier.X == 0 && lastBezier.Y == 0)
                 {
@@ -240,47 +236,34 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                     control1X = 2 * lastPoint.X - lastBezier.X;
                     control1Y = 2 * lastPoint.Y - lastBezier.Y;
                 }
-                pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
-                    control1X, control1Y,
-                    path.value[j], path.value[j + 1],
-                    path.value[j], path.value[j + 1]);
 
-                lastBezier.X = control1X;
-                lastBezier.Y = control1Y;
-
-                j += 2;
-            }
-            break;
-        }
-        case 't':
-        {
-            if (j + 1 < path.value.size())
-            {
-                pathToDraw.GetLastPoint(&lastPoint);
-                float control1X, control1Y;
-                if (lastBezier.X == 0 && lastBezier.Y == 0)
+                if (pathType == 't')
                 {
-                    control1X = lastPoint.X;
-                    control1Y = lastPoint.Y;
+                    float point1 = lastPoint.X + 2.0f / 3.0f * (control1X - lastPoint.X);
+                    float point2 = lastPoint.Y + 2.0f / 3.0f * (control1Y - lastPoint.Y);
+
+                    float point3 = (lastPoint.X + path.value[j]) + (2.0f / 3.0f * (control1X - lastPoint.X - path.value[j]));
+                    float point4 = (lastPoint.Y + path.value[j + 1]) + (2.0f / 3.0f * (control1Y - lastPoint.Y - path.value[j + 1]));
+
+                    pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
+                        point1, point2,
+                        point3, point4,
+                        lastPoint.X + path.value[j], lastPoint.Y + path.value[j + 1]);
+
+                    lastBezier.X = (3.0f / 4.0f * point1 + 1.0f / 4.0f * point3);
+                    lastBezier.Y = (3.0f / 4.0f * point2 + 1.0f / 4.0f * point4);
                 }
                 else
                 {
-                    control1X = 2 * lastPoint.X - lastBezier.X;
-                    control1Y = 2 * lastPoint.Y - lastBezier.Y;
+                    pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
+                        control1X, control1Y,
+                        path.value[j], path.value[j + 1],
+                        path.value[j], path.value[j + 1]);
+
+                    lastBezier.X = control1X;
+                    lastBezier.Y = control1Y;
+
                 }
-                float point1 = lastPoint.X + 2.0f / 3.0f * (control1X - lastPoint.X);
-                float point2 = lastPoint.Y + 2.0f / 3.0f * (control1Y - lastPoint.Y);
-
-                float point3 = (lastPoint.X + path.value[j]) + (2.0f / 3.0f * (control1X - lastPoint.X - path.value[j]));
-                float point4 = (lastPoint.Y + path.value[j + 1]) + (2.0f / 3.0f * (control1Y - lastPoint.Y - path.value[j + 1]));
-
-                pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
-                    point1, point2,
-                    point3, point4,
-                    lastPoint.X + path.value[j], lastPoint.Y + path.value[j + 1]);
-
-                lastBezier.X = (3.0f / 4.0f * point1 + 1.0f / 4.0f * point3);
-                lastBezier.Y = (3.0f / 4.0f * point2 + 1.0f / 4.0f * point4);
 
                 j += 2;
             }
@@ -428,6 +411,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             }
             break;
         }
+
         case 'Z':
         case 'z':
         {
