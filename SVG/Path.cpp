@@ -4,8 +4,6 @@
 ClassPath::ClassPath(float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, Path path, string fill, string stroke, float width, float height) :
     Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform, fill, stroke), path(path), width_out(width), height_out(height) {}
 
-
-
 void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
 {
     GraphicsPath pathToDraw;
@@ -13,7 +11,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
     size_t j = 0;
     PointF lastPoint;
     PointF lastBezier = { 0,0 };
-   
+
     for (size_t i = 0; i < path.type.size(); ++i)
     {
         char pathType = path.type[i];
@@ -356,8 +354,8 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 float rotation = path.value[j + 2];
                 bool largeArcFlag = path.value[j + 3];
                 bool sweepFlag = path.value[j + 4];
-                float x = lastPoint.X + path.value[j + 5] ;
-                float y = lastPoint.Y + path.value[j + 6] ;
+                float x = lastPoint.X + path.value[j + 5];
+                float y = lastPoint.Y + path.value[j + 6];
 
                 float Angle = rotation * static_cast<float>(M_PI) / 180.0f;
                 float cosAngle = cos(Angle);
@@ -410,7 +408,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                     startAngleDegrees, deltAngleDegrees);
 
                 j += 7;
-               
+
             }
             break;
         }
@@ -448,10 +446,67 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             string xlink = radialGradient->getxlink();
             if (xlink != "")
             {
-                fill = xlink;
-                
+                //fill = xlink;
+
+                vector<LinearGradient*> vectorlinear = defs[0]->getlinear();
+                LinearGradient* linearGradient = nullptr;
+
+
+                for (LinearGradient* lin : vectorlinear)
+                {
+                    if (lin->getID() == xlink)
+                    {
+                        linearGradient = lin;
+                        break;
+                    }
+                }
+                if (linearGradient != nullptr)
+                {
+                    vector<Stop*> StopList = linearGradient->getStopList();
+                    Color* colors = new Color[StopList.size()];
+
+                    for (int i = 0; i < StopList.size(); ++i)
+                    {
+                        colors[i] = Color(255 * StopList[i]->getstopOpacity(), StopList[i]->getstopColor_red(), StopList[i]->getstopColor_green(), StopList[i]->getstopColor_blue());
+                    }
+                    float* positions = new float[StopList.size()];
+
+                    for (size_t i = 0; i < StopList.size(); ++i)
+                    {
+                        positions[i] = 1 - StopList[i]->getoffset();
+                    }
+
+                    float cx = radialGradient->getcx();
+                    float cy = radialGradient->getcy();
+                    float r = radialGradient->getr();
+
+                    Transform trans = radialGradient->gettransform();
+
+
+                    GraphicsPath pathh;
+                    pathh.AddEllipse(RectF(cx - r, cy - r, 2 * r, 2 * r));
+                    PathGradientBrush radiall(&pathh);
+                    radiall.SetInterpolationColors(colors, positions, StopList.size());
+                    Matrix matrix_(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
+                    radiall.GetTransform(&matrix_);
+                    radiall.SetWrapMode(WrapModeTileFlipXY);
+
+
+
+                    LinearGradientBrush linGrBrush(PointF(cx - r, cy - r), PointF(cx + r, cy + r), colors[0], colors[StopList.size() - 1]);
+                    Matrix matrix(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
+                    linGrBrush.GetTransform(&matrix);
+                    linGrBrush.SetInterpolationColors(colors, positions, StopList.size());
+
+                    linGrBrush.SetWrapMode(WrapModeTileFlipXY);
+                    graphics.FillPath(&linGrBrush, &pathToDraw);
+                    delete[] positions;
+                    delete[] colors;
+
+                }
+
             }
-            else 
+            else
             {
                 vector<Stop*> StopList = radialGradient->getStopList();
                 Color* colors = new Color[StopList.size()];
@@ -466,14 +521,17 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 {
                     positions[i] = StopList[i]->getoffset();
                 }
+
                 float cx = radialGradient->getcx();
                 float cy = radialGradient->getcy();
                 float r = radialGradient->getr();
                 float fx = radialGradient->getfx();
                 float fy = radialGradient->getfy();
                 Transform trans = radialGradient->gettransform();
-               
+
+
                 LinearGradientBrush linGrBrush(PointF(cx - r, cy - r), PointF(cx + r, cy + r), colors[0], colors[StopList.size() - 1]);
+                linGrBrush.SetInterpolationColors(colors, positions, StopList.size());
                 Matrix matrix(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
                 linGrBrush.GetTransform(&matrix);
                 linGrBrush.SetWrapMode(WrapModeTileFlipXY);
@@ -486,7 +544,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
         vector<LinearGradient*> vectorlinear = defs[0]->getlinear();
         LinearGradient* linearGradient = nullptr;
 
-       
+
         for (LinearGradient* lin : vectorlinear)
         {
             if (lin->getID() == fill)
@@ -495,7 +553,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 break;
             }
         }
-    
+
         if (linearGradient != nullptr)
         {
             vector<Stop*> StopList = linearGradient->getStopList();
@@ -531,13 +589,13 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                     PointF(pointlineargradient.x2, pointlineargradient.y2),
                     colors[0], colors[StopList.size() - 1]);
                 Transform trans = linearGradient->gettransform();
-                //Matrix matrix(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
-                //gradientBrush.GetTransform(&matrix);
+                Matrix matrix(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
+                gradientBrush.GetTransform(&matrix);
                 gradientBrush.SetInterpolationColors(colors, positions, StopList.size());
                 gradientBrush.SetLinearColors(colors[0], colors[StopList.size() - 1]); //  default gradientUnits = userSpaceOnUse
                 gradientBrush.SetGammaCorrection(TRUE);
                 graphics.FillPath(&gradientBrush, &pathToDraw);
-               
+
             }
             delete[] colors;
             delete[] positions;
