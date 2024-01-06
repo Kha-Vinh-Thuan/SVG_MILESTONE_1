@@ -294,6 +294,147 @@ string convert_String_to_RGB(RGB& rgb, string s, smatch match, regex re)
     return "";
 }
 
+void convertStyle(string styleString, string& fill, string& stroke, RGB& fillRGB, RGB& strokeRGB, float& fillOpacity, float& strokeOpacity, float& strokeWidth) {
+    static regex rgbRegex("rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
+    int posFill = styleString.find("fill:");
+    int posStroke = styleString.find("stroke:");
+    int posFillOpa = styleString.find("fill-opacity:");
+    int posStrokeOpa = styleString.find("stroke-opacity:");
+    int posStrokeWidth = styleString.find("stroke-width:");
+    smatch matches;
+    if (posFill != string::npos) {
+        size_t fillEnd = styleString.find(";", posFill);
+        fill = styleString.substr(posFill + 5, fillEnd - posFill - 5);
+        if (fill.find("url") == string::npos) {
+
+            fill = convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
+        }
+        else {
+            int hashtagPos = fill.find("#");
+            int stopPos = fill.find(")");
+            fill = fill.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+        }
+    }
+    if (posStroke != string::npos) {
+        size_t strokeEnd = styleString.find(";", posStroke);
+        stroke = styleString.substr(posStroke + 7, strokeEnd - posStroke - 7);
+
+        if (stroke.find("url") == string::npos) {
+
+            stroke = convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
+        }
+        else {
+            int hashtagPos = stroke.find("#");
+            int stopPos = stroke.find(")");
+            stroke = stroke.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+        }
+    }
+    else
+    {
+        strokeOpacity = strokeWidth = 0;
+        strokeRGB = { 255,255,255 };
+    }
+    if (posFillOpa != string::npos) {
+        size_t fillOpaEnd = styleString.find(";", posFillOpa);
+        string fillOpaValue = styleString.substr(posFillOpa + 13, fillOpaEnd - posFillOpa - 13);
+        fillOpacity = stod(fillOpaValue);
+    }
+    if (posStrokeOpa != string::npos) {
+        size_t strokeOpaEnd = styleString.find(";", posStrokeOpa);
+        string strokeOpaValue = styleString.substr(posStrokeOpa + 15, strokeOpaEnd - posStrokeOpa - 15);
+        strokeOpacity = stod(strokeOpaValue);
+    }
+    if (posStrokeWidth != string::npos) {
+        size_t strokeWidthEnd = styleString.find(";", posStrokeWidth);
+        string strokeWidthValue = styleString.substr(posStrokeWidth + 13, strokeWidthEnd - posStrokeWidth - 13);
+        strokeWidth = stod(strokeWidthValue);
+    }
+}
+
+void convertStyleChild(string styleString, string& fill, string& stroke, RGB& fillRGB, RGB& strokeRGB, float& fillOpacity, float& strokeOpacity, float& strokeWidth, groupChild groupChild) {
+    static regex rgbRegex("rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
+    int posFill = styleString.find("fill:");
+    int posStroke = styleString.find("stroke:");
+    int posFillOpa = styleString.find("fill-opacity:");
+    int posStrokeOpa = styleString.find("stroke-opacity:");
+    int posStrokeWidth = styleString.find("stroke-width:");
+    smatch matches;
+    if (posFill != string::npos) {
+        size_t fillEnd = styleString.find(";", posFill);
+        fill = styleString.substr(posFill + 5, fillEnd - posFill - 5);
+        if (fill.find("url") == string::npos) {
+
+            fill = convert_String_to_RGB(fillRGB, fill, matches, rgbRegex);
+        }
+        else {
+            int hashtagPos = fill.find("#");
+            int stopPos = fill.find(")");
+            fill = fill.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+        }
+    }
+    else {
+        fillRGB = groupChild.fillRGB;
+    }
+    if (posStroke != string::npos) {
+        size_t strokeEnd = styleString.find(";", posStroke);
+        stroke = styleString.substr(posStroke + 7, strokeEnd - posStroke - 7);
+        if (stroke.find("url") == string::npos) {
+
+            stroke = convert_String_to_RGB(strokeRGB, stroke, matches, rgbRegex);
+        }
+        else {
+            int hashtagPos = stroke.find("#");
+            int stopPos = stroke.find(")");
+            stroke = stroke.substr(hashtagPos + 1, stopPos - hashtagPos - 1);
+        }
+    }
+    else {
+        strokeRGB = groupChild.strokeRGB;
+    }
+    if (posFillOpa != string::npos) {
+        size_t fillOpaEnd = styleString.find(";", posFillOpa);
+        string fillOpaValue = styleString.substr(posFillOpa + 13, fillOpaEnd - posFillOpa - 13);
+        fillOpacity = stod(fillOpaValue);
+    }
+    else {
+        fillOpacity = groupChild.fillOpacity;
+    }
+    if (posStrokeOpa != string::npos) {
+        size_t strokeOpaEnd = styleString.find(";", posStrokeOpa);
+        string strokeOpaValue = styleString.substr(posStrokeOpa + 15, strokeOpaEnd - posStrokeOpa - 15);
+        strokeOpacity = stod(strokeOpaValue);
+    }
+    else {
+        strokeOpacity = groupChild.strokeOpacity;
+    }
+    if (posStrokeWidth != string::npos) {
+        size_t strokeWidthEnd = styleString.find(";", posStrokeWidth);
+        string strokeWidthValue = styleString.substr(posStrokeWidth + 13, strokeWidthEnd - posStrokeWidth - 13);
+        strokeWidth = stod(strokeWidthValue);
+    }
+    else {
+        strokeWidth = groupChild.strokeWidth;
+    }
+}
+
+void convertStyleGradient(string styleString, string& id, string& gradientUnits, string& spreadMethod) {
+    int posId = styleString.find("id:");
+    int posGradientUnits = styleString.find("gradientUnits:");
+    int posSpreadMethod = styleString.find("spreadMethod:");
+    if (posId != string::npos) {
+        size_t idEnd = styleString.find(";", posId);
+        id = styleString.substr(posId + 3, idEnd - posId - 3);
+    }
+    if (posGradientUnits != string::npos) {
+        size_t gradientUnitsEnd = styleString.find(";", posGradientUnits);
+        gradientUnits = styleString.substr(posGradientUnits + 14, gradientUnitsEnd - posGradientUnits - 14);
+    }
+    if (posSpreadMethod != string::npos) {
+        size_t spreadMethodEnd = styleString.find(";", posSpreadMethod);
+        spreadMethod = styleString.substr(posSpreadMethod + 13, spreadMethodEnd - posSpreadMethod - 13);
+    }
+}
+
 vector<string> split(string& s, char deli)
 {
     vector<string> tokens;
