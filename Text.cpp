@@ -25,8 +25,9 @@ string normalizeTextContent(string content)
     return content;
 }
 
-Text::Text(float x, float y, const string& content, float fontSize, float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, const string& fontFamily, float dx, float dy, string textAnchor, string fontStyle, bool checkStroke, string fill, string stroke)
-    : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform, fill, stroke), x(x), y(y), fontSize(fontSize), content(content), fontFamily(fontFamily), dx(dx), dy(dy), fontStyle(fontStyle), textAnchor(textAnchor), checkk(checkStroke) {}
+Text::Text(float x, float y, const string& content, float fontSize, float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, const string& fontFamily, float dx, float dy, string textAnchor, string fontStyle, bool checkStroke, string fill, string stroke, Transform trans)
+    : Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform, fill, stroke), x(x), y(y), fontSize(fontSize), content(content), fontFamily(fontFamily), dx(dx), dy(dy), fontStyle(fontStyle), textAnchor(textAnchor), checkk(checkStroke), trans(trans) {}
+
 void Text::Draw(Graphics& graphics, vector<Defs*>& defs)
 {
     content = normalizeTextContent(content);
@@ -81,13 +82,13 @@ void Text::Draw(Graphics& graphics, vector<Defs*>& defs)
     }
     else if (textAnchor == "middle")
     {
-        point = PointF(x + dx - fontSize / 2.0f, y + dy - fontSize / 2.0f);
+        point = PointF(x + dx - (fontSize / 2.0f) - trans.translateX / 2, y + dy - (fontSize / 2.0f) - trans.translateY / 2);
         stringFormat.SetAlignment(StringAlignmentCenter);
         stringFormat.SetLineAlignment(StringAlignmentCenter);
     }
     else if (textAnchor == "end")
     {
-        point = PointF(x + dx - fontSize, y + dy - fontSize);
+        point = PointF(x + dx, y + dy);
         stringFormat.SetAlignment(StringAlignmentFar);
         stringFormat.SetLineAlignment(StringAlignmentFar);
     }
@@ -163,6 +164,8 @@ void Text::Draw(Graphics& graphics, vector<Defs*>& defs)
             else
             {
                 graphics.FillPath(&fillBrush, &path);
+                if (strokeRGB.r != 255 && strokeRGB.g != 255 && strokeRGB.b != 255)
+                    graphics.DrawPath(&pen, &path);
             }
         }
         else
@@ -213,8 +216,10 @@ void Text::Draw(Graphics& graphics, vector<Defs*>& defs)
                 }
             }
             else
+            {
                 graphics.FillPath(&fillBrush, &path);
-
+                graphics.DrawPath(&pen, &path);
+            }
         }
     }
     else
