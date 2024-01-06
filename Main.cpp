@@ -1,5 +1,5 @@
 #include "ReadFile.h"
-string filename = "sample.svg";
+string filename = "svg-21.svg";
 
 
 float zoomScale = 1.0f;
@@ -11,8 +11,16 @@ void ViewBox::DrawViewBox()
 {
     if (width_out == 0 || height_out == 0)
     {
-        width_out = 800;
-        height_out = 600;
+        if (width_in < 800 || height_in < 600)
+        {
+            width_out = 800;
+            height_out = 600;
+        }
+        else
+        {
+            width_out = width_in;
+            height_out = height_in;
+        }
     }
     float scaleX_ = 1, scaleY_ = 1;
 
@@ -31,30 +39,19 @@ void ViewBox::DrawViewBox()
     }
 
 }
+
 void ZoomGraphics(Graphics& graphics, float scale_, float scale_viewbox, float width_out, float height_out)
 {
-    if (scale_viewbox == 1 && width_out == 0 && height_out == 0)
+    if (scale_viewbox != 1 || width_out != 0 || height_out != 0)
     {
-        graphics.ResetTransform();
-        graphics.TranslateTransform(offsetX, offsetY);
-        graphics.ScaleTransform(scale_ , scale_);
-    }
-    else
-    {
-        graphics.ResetTransform();
-        graphics.TranslateTransform(offsetX, offsetY);
-
-        float clippedWidth = width_out / scale_;
-        float clippedHeight = height_out / scale_;
-        float clippedX = ((width_out - clippedWidth) / 2) - offsetX;
-        float clippedY = ((height_out - clippedHeight) / 2) - offsetY;
-
         Pen blackPen(Color(0, 0, 0), 1.0f);
-        graphics.DrawRectangle(&blackPen, clippedX, clippedY, clippedWidth, clippedHeight);
-        graphics.SetClip(RectF(clippedX, clippedY, clippedWidth, clippedHeight));
-
-        graphics.ScaleTransform(scale_ * scale_viewbox, scale_ * scale_viewbox);
+        RectF rectangle(0, 0, width_out, height_out);
+        graphics.DrawRectangle(&blackPen, rectangle);
+        graphics.SetClip(rectangle);
     }
+    graphics.ResetTransform();
+    graphics.TranslateTransform(offsetX, offsetY);
+    graphics.ScaleTransform(scale_, scale_);
 }
 
 string GetClassName(Shape* element)
@@ -105,7 +102,7 @@ VOID OnPaint(HDC hdc)
     vector<Shape*> elements;
     vector<Defs*> elements_defs;
     ViewBox* viewBox = new ViewBox(0, 0, 0, 0, 0, 0, 1);
- 
+
     parseAndRenderSVG(filename, elements, elements_defs, viewBox);
     bool check_view = viewBox->getcheck();
     if (check_view == 1)
@@ -173,6 +170,7 @@ VOID OnPaint(HDC hdc)
     }
     graphics.ResetTransform();
 }
+
 int lastMouseX = 0;
 int lastMouseY = 0;
 
@@ -262,7 +260,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, INT iCmdShow
     RegisterClass(&wndClass);
     hWnd = CreateWindow(
         TEXT("GettingStarted"), // window class name
-        TEXT("SVG Demo"),       // window caption
+        TEXT("SVGGGGGGGGGGGGGGGGGGGGGG"),       // window caption
         WS_OVERLAPPEDWINDOW,    // window style
         CW_USEDEFAULT,          // initial x position
         CW_USEDEFAULT,          // initial y position
