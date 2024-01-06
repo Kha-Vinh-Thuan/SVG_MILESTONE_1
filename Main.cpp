@@ -1,4 +1,4 @@
-#include "ReadFile.h"
+﻿#include "ReadFile.h"
 string filename = "svg-21.svg";
 
 
@@ -102,7 +102,7 @@ VOID OnPaint(HDC hdc)
     vector<Shape*> elements;
     vector<Defs*> elements_defs;
     ViewBox* viewBox = new ViewBox(0, 0, 0, 0, 0, 0, 1);
-
+ 
     parseAndRenderSVG(filename, elements, elements_defs, viewBox);
     bool check_view = viewBox->getcheck();
     if (check_view == 1)

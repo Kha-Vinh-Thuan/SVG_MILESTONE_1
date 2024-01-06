@@ -11,7 +11,7 @@ struct RGB
 struct Transform
 {
     float translateX, translateY, rotateAngle, scaleX, scaleY;
-    float skewX, skewY;
+    float skewX , skewY;
     vector<string> transformOrder;
 };
 struct groupChild

@@ -24,7 +24,7 @@ int Stop::getstopColor_blue()
 }
 Gradient::Gradient() {}
 
-Gradient::Gradient(string id) :id(id) {}
+Gradient::Gradient(string id):id(id) {}
 
 Defs::Defs(vector<LinearGradient*> LinearGradient_list, vector<RadialGradient*> RadialGradient_list) :
     LinearGradient_list(LinearGradient_list), RadialGradient_list(RadialGradient_list) {}
@@ -46,7 +46,7 @@ vector<RadialGradient*> Defs::getradial()
     return RadialGradient_list;
 }
 
-RadialGradient::RadialGradient(string id, float cx, float cy, float r, string xlink_href, Transform transform, float fx, float fy, vector<Stop*> stop_list) :
+RadialGradient::RadialGradient(string id, float cx, float cy, float r, string xlink_href, Transform transform, float fx, float fy,vector<Stop*> stop_list) :
     Gradient(id), cx(cx), cy(cy), r(r), xlink_href(xlink_href), fx(fx), fy(fy), transform(transform), stop_list(stop_list) {}
 
 

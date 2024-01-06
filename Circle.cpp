@@ -45,7 +45,7 @@ void Circle::Draw(Graphics& graphics, vector<Defs*>& defs)
             LinearGradientBrush gradientBrush(PointF(pointlineargradient.x1, pointlineargradient.y1), PointF(pointlineargradient.x2, pointlineargradient.y2), colors[0], colors[StopList.size() - 1]);
             gradientBrush.SetInterpolationColors(colors, positions, StopList.size());
             gradientBrush.SetGammaCorrection(TRUE);
-            graphics.FillEllipse(&gradientBrush, cx - r, cy - r, 2 * r, 2 * r);
+            graphics.FillEllipse(&gradientBrush, cx - r, cy - r, 2 * r, 2 * r);           
             delete[] colors;
             delete[] positions;
         }
@@ -54,5 +54,5 @@ void Circle::Draw(Graphics& graphics, vector<Defs*>& defs)
     {
         graphics.FillEllipse(&circleBrush, cx - r, cy - r, 2 * r, 2 * r);
     }
-    graphics.Restore(state);
+     graphics.Restore(state);
 }
