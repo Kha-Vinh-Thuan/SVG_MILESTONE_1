@@ -1,6 +1,6 @@
 #ifndef READFILE_H
 #define READFILE_H
-
+#define _USE_MATH_DEFINES
 #include "Rectangle.h"
 #include "Circle.h"
 #include "Group.h"
@@ -22,6 +22,14 @@ string toLower(string);
 void convert_letters_to_RGB(RGB&, string);
 
 string convert_String_to_RGB(RGB&, string, smatch, regex);
+
+
+void convert_String_to_RGB_(RGB&, string, smatch, regex);
+void convertStyle(string, string&, string&, RGB&, RGB&, float&, float&, float&);
+
+void convertStyleChild(string, string&, string&, RGB&, RGB&, float&, float&, float&, groupChild);
+
+void convertStyleGradient(string, string&, string&, string&);
 
 vector<string> split(string&, char);
 

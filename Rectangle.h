@@ -7,7 +7,6 @@ class Rect_ : public Shape
 {
 private:
     float x, y, width, height;
-
 public:
     Rect_(float, float, float, float, float, float, RGB, RGB, float, Transform, string, string);
     void Draw(Graphics&, vector<Defs*>&) override;
