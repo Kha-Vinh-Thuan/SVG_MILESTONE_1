@@ -11,9 +11,9 @@ struct RGB
 struct Transform
 {
     float translateX, translateY, rotateAngle, scaleX, scaleY;
+    float skewX, skewY;
     vector<string> transformOrder;
 };
-
 struct groupChild
 {
     float fontSize;
@@ -46,11 +46,10 @@ public:
 class Gradient
 {
 protected:
-    string id, gradientUnits;
+    string id;
 public:
     Gradient();
-    Gradient(string, string);
-    virtual void DrawDef(Graphics&) = 0;
+    Gradient(string);
     virtual string getID() = 0;
 };
 
@@ -63,19 +62,21 @@ public:
     Defs(vector<LinearGradient*>, vector<RadialGradient*>);
     Defs();
     vector<LinearGradient*> getlinear();
+    vector<RadialGradient*> getradial();
 };
 
 class LinearGradient : public Gradient
 {
 private:
     pointLinearGradient point;
-    string spreadMethod;
     vector<Stop*> stop_list;
+    Transform transform;
 public:
-    LinearGradient(string, pointLinearGradient, string, string, vector<Stop*>);
-    void DrawDef(Graphics&) override;
+    LinearGradient(string, pointLinearGradient, vector<Stop*>, Transform);
     string getID() override;
-    void Draww(LinearGradientBrush*&);
+    vector<Stop*> getStopList();
+    pointLinearGradient getPoint();
+    Transform gettransform();
 };
 
 class RadialGradient : public Gradient
@@ -83,9 +84,19 @@ class RadialGradient : public Gradient
 private:
     float cx, cy, r, fx, fy;
     string xlink_href;
+    Transform transform;
+    vector<Stop*> stop_list;
 public:
-    RadialGradient(string, float, float, float, string, string, float, float);
-    void DrawDef(Graphics&) override;
+    RadialGradient(string, float, float, float, string, Transform, float, float, vector<Stop*>);
     string getID() override;
+    vector<Stop*> getStopList();
+    float getcx();
+    float getcy();
+    float getr();
+    float getfx();
+    float getfy();
+    string getxlink();
+    Transform gettransform();
+
 };
 #endif // !DEFS_H
