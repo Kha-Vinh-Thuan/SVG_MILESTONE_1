@@ -1,1 +1,0 @@
-# SVG_MILESTONE_1

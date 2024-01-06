@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+    <rect stroke="darkslategray" x="640" y="50" width="400" height="350" fill="grey" fill-opacity="0.24" />
+    <g transform="translate(160, 90)" stroke-width="4" stroke="black">
+        <g fill="black" stroke="navy" font-family="times new roman" stroke-width="2.0">
+            <text x="655" y="350" font-size="30" text-anchor="middle" transform="rotate(25) translate(50,60)">sleep all
+                day</text>
+        </g>
+    </g>
+</svg>

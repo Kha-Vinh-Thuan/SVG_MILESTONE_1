@@ -1,0 +1,21 @@
+﻿  SVGDemo.cpp
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(159,62): warning C4244: 'argument': conversion from 'int' to 'Gdiplus::REAL', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(159,40): warning C4244: 'argument': conversion from 'int' to 'Gdiplus::REAL', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(161,37): warning C4244: 'argument': conversion from 'int' to 'Gdiplus::REAL', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(241,40): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(242,31): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(269,34): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(270,43): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(296,42): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(299,33): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(324,40): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(327,37): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(350,31): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(430,35): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(431,44): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(486,43): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(487,34): warning C4244: 'argument': conversion from 'float' to 'BYTE', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(589,21): warning C4101: 'fillRGB': unreferenced local variable
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(963,15): warning C4244: 'return': conversion from 'WPARAM' to 'int', possible loss of data
+D:\HK4\SVGDemo\SVGDemo\SVGDemo.cpp(811): warning C4715: 'GetClassNameW': not all control paths return a value
+  SVGDemo.vcxproj -> D:\HK4\SVGDemo\x64\Debug\SVGDemo.exe

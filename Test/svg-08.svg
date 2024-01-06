@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+
+  <g stroke-width="2" transform="translate(640,360) scale(5)">
+    <g fill="none">
+      <ellipse stroke="rgb(102,137,154)" rx="6" ry="44" />
+      <ellipse stroke="rgb(225,216,93)" rx="6" ry="44" transform="rotate(-66)" />
+      <ellipse stroke="rgb(128,163,207)" rx="6" ry="44" transform="rotate(66)" />
+      <circle stroke="rgb(75,84,31)" r="44" />
+    </g>
+    <g fill="rgb(102,137,154)" stroke="white" stroke-width="2">
+      <circle fill="rgb(128,163,207)" r="13" />
+      <circle cy="-44" r="9" />
+      <circle cx="-40" cy="18" r="9" />
+      <circle cx="40" cy="18" r="9" />
+    </g>
+  </g>
+
+ 
+</svg>
