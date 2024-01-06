@@ -9,9 +9,10 @@ private:
     float x, y, fontSize;
     string content, fontFamily, textAnchor, fontStyle;
     bool checkk;
+    Transform trans;
 
 public:
-    Text(float, float, const string&, float, float, float, float, RGB, RGB, Transform, const string&, float, float, string, string, bool, string, string);
+    Text(float, float, const string&, float, float, float, float, RGB, RGB, Transform, const string&, float, float, string, string, bool, string, string, Transform);
     void Draw(Graphics&, vector<Defs*>&) override;
 };
 
