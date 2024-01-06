@@ -647,7 +647,7 @@ void parseTransformMatrix(const string& transformStr, Transform& transform) {
         if (transform.translateX != 0.0 && transform.translateY != 0.0)
             transform.transformOrder.push_back("translate");
     }
-
+    
 }
 
 vector<string> mergeVector(vector<string> v1, vector<string> v2)
@@ -1034,7 +1034,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
                 if (stroke == "" && strokeRGB.r == 255 && strokeRGB.g == 255 && strokeRGB.b == 255)
                 {
                     checkk = 0;
-                }
+                }                       
             }
 
             strokeWidth = node.attribute("stroke-width").empty()
@@ -1281,7 +1281,7 @@ void parseSVGNode(pugi::xml_node& node, vector<Shape*>& elements, groupChild gro
         RGB fillRGB = { 0, 0, 0 };
         RGB strokeRGB = { 0, 0, 0 };
         smatch matches;
-
+        
         string styleString = node.attribute("style").value();
         if (!styleString.empty()) {
             convertStyleChild(styleString, fill, stroke, fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, groupChild);
@@ -1749,7 +1749,7 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements, vector<
                         ? 1
                         : elementNode.attribute("stroke-opacity").as_float();
                     stroke = elementNode.attribute("stroke").value();
-                    if (stroke == "none" || stroke == "")
+                    if (stroke == "none")
                     {
                         strokeOpacity = 0;
                         strokeRGB = { 255, 255, 255 };
@@ -1837,6 +1837,8 @@ void parseAndRenderSVG(const string& filePath, vector<Shape*>& elements, vector<
                 if (!styleString.empty()) {
                     convertStyle(styleString, fill, stroke, fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth);
                 }
+
+
 
                 else {
                     // FILL
