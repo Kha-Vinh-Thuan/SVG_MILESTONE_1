@@ -24,77 +24,78 @@ int Stop::getstopColor_blue()
 }
 Gradient::Gradient() {}
 
-Gradient::Gradient(string id, string units):id(id), gradientUnits(units) {}
+Gradient::Gradient(string id) :id(id) {}
 
 Defs::Defs(vector<LinearGradient*> LinearGradient_list, vector<RadialGradient*> RadialGradient_list) :
     LinearGradient_list(LinearGradient_list), RadialGradient_list(RadialGradient_list) {}
 Defs::Defs() {}
 
-LinearGradient::LinearGradient(string id, pointLinearGradient point, string spreadMethod, string gradientUnits, vector<Stop*> stop_list) :
-    Gradient(id, gradientUnits), point(point), spreadMethod(spreadMethod), stop_list(stop_list) {}
+LinearGradient::LinearGradient(string id, pointLinearGradient point, vector<Stop*> stop_list, Transform transform) :
+    Gradient(id), point(point), stop_list(stop_list), transform(transform) {}
 
 vector<LinearGradient*> Defs::getlinear()
 {
     return LinearGradient_list;
 }
-
-RadialGradient::RadialGradient(string id, float cx, float cy, float r, string gradientUnits, string xlink_href, float fx, float fy) :
-    Gradient(id, gradientUnits), cx(cx), cy(cy), r(r), xlink_href(xlink_href), fx(fx), fy(fy) {}
-
-void LinearGradient::DrawDef(Graphics& graphics)
+Transform LinearGradient::gettransform()
 {
-   /* size_t numColors = min(stop_list.size(), static_cast<size_t>(3));    
-    Color* colors = new Color[numColors];
-
-    for (size_t i = 0; i < numColors; ++i)
-    {
-        colors[i] = Color(stop_list[i]->getstopColor_red(), stop_list[i]->getstopColor_green(), stop_list[i]->getstopColor_blue());
-    }
-    LinearGradientBrush gradientBrush(PointF(point.x1, point.y1), PointF(point.x2, point.y2), colors[0], colors[numColors - 1]);
-
-    REAL* positions = new REAL[numColors];
-    for (size_t i = 0; i < numColors; ++i)
-    {
-        positions[i] = stop_list[i]->getoffset();
-    }
-    gradientBrush.SetInterpolationColors(colors, positions, numColors);*/
+    return transform;
+}
+vector<RadialGradient*> Defs::getradial()
+{
+    return RadialGradient_list;
 }
 
-void LinearGradient::Draww(LinearGradientBrush*& linear)
-{
-    size_t numColors = min(stop_list.size(), static_cast<size_t>(3));
+RadialGradient::RadialGradient(string id, float cx, float cy, float r, string xlink_href, Transform transform, float fx, float fy, vector<Stop*> stop_list) :
+    Gradient(id), cx(cx), cy(cy), r(r), xlink_href(xlink_href), fx(fx), fy(fy), transform(transform), stop_list(stop_list) {}
 
-    Color* colors = new Color[numColors];
-
-    for (size_t i = 0; i < numColors; ++i)
-    {
-        colors[i] = Color(stop_list[i]->getstopColor_red(), stop_list[i]->getstopColor_green(), stop_list[i]->getstopColor_blue());
-    }
-
-    LinearGradientBrush gradientBrush(PointF(point.x1, point.y1), PointF(point.x2, point.y2), colors[0], colors[numColors - 1]);
-
-    REAL* positions = new REAL[numColors];
-    for (size_t i = 0; i < numColors; ++i)
-    {
-        positions[i] = stop_list[i]->getoffset();
-    }
-
-    gradientBrush.SetInterpolationColors(colors, positions, numColors);
-
-    linear = &gradientBrush;
-
-
-    delete[] colors;
-    delete[] positions;
-}
 
 string LinearGradient::getID()
 {
     return id;
 }
+vector<Stop*> LinearGradient::getStopList()
+{
+    return stop_list;
+}
+pointLinearGradient LinearGradient::getPoint()
+{
+    return point;
+}
 string RadialGradient::getID()
 {
     return id;
 }
-void RadialGradient::DrawDef(Graphics&) {}
 
+float RadialGradient::getcx()
+{
+    return cx;
+}
+float RadialGradient::getcy()
+{
+    return cy;
+}
+float RadialGradient::getfx()
+{
+    return fx;
+}
+float RadialGradient::getfy()
+{
+    return fy;
+}
+float RadialGradient::getr()
+{
+    return r;
+}
+string RadialGradient::getxlink()
+{
+    return xlink_href;
+}
+Transform RadialGradient::gettransform()
+{
+    return transform;
+}
+vector<Stop*> RadialGradient::getStopList()
+{
+    return stop_list;
+}

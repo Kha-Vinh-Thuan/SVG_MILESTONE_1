@@ -1,8 +1,10 @@
 #include "Path.h"
 
 
-ClassPath::ClassPath(float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, Path path, string fill, string stroke) :
-    Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform, fill, stroke), path(path) {}
+ClassPath::ClassPath(float fillOpacity, float strokeOpacity, float strokeWidth, RGB fillRGB, RGB strokeRGB, Transform transform, Path path, string fill, string stroke, float width, float height) :
+    Shape(fillRGB, strokeRGB, fillOpacity, strokeOpacity, strokeWidth, transform, fill, stroke), path(path), width_out(width), height_out(height) {}
+
+
 
 void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
 {
@@ -11,7 +13,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
     size_t j = 0;
     PointF lastPoint;
     PointF lastBezier = { 0,0 };
-    PointF lastARC = { 0,0 };
+
     for (size_t i = 0; i < path.type.size(); ++i)
     {
         char pathType = path.type[i];
@@ -24,8 +26,8 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 pathToDraw.StartFigure();
                 pathToDraw.AddLine(path.value[j], path.value[j + 1], path.value[j], path.value[j + 1]);
 
-              
-                 
+
+
                 j += 2;
             }
             break;
@@ -46,7 +48,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
             if (j + 1 < path.value.size())
             {
                 pathToDraw.AddLine(path.value[j], path.value[j + 1], path.value[j], path.value[j + 1]);
-                
+
                 j += 2;
             }
             break;
@@ -155,7 +157,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                     control1X = 2.0f * lastPoint.X - lastBezier.X;
                     control1Y = 2.0f * lastPoint.Y - lastBezier.Y;
                 }
-                
+
                 if (pathType == 's')
                 {
                     pathToDraw.AddBezier(lastPoint.X, lastPoint.Y,
@@ -281,8 +283,8 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 float rotation = path.value[j + 2];
                 bool largeArcFlag = path.value[j + 3] != 0;
                 bool sweepFlag = path.value[j + 4] != 0;
-                float x =  path.value[j + 5];
-                float y =  path.value[j + 6];              
+                float x = path.value[j + 5];
+                float y = path.value[j + 6];
 
                 float Angle = rotation * static_cast<float>(M_PI) / 180.0f;
                 float cosAngle = cos(Angle);
@@ -335,7 +337,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 float startAngleDegrees = fmod((startAngle * 180.0f) / M_PI, 360.0f);
                 float deltAngleDegrees = fmod((deltAngle * 180.0f) / M_PI, 360.0f);
 
-                pathToDraw.AddArc(center.X - rx, center.Y - ry, 2.0f * rx, 2.0f * ry, 
+                pathToDraw.AddArc(center.X - rx, center.Y - ry, 2.0f * rx, 2.0f * ry,
                     startAngleDegrees, deltAngleDegrees);
 
 
@@ -372,7 +374,7 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                     rx = sqrt(check_r) * rx;
                     ry = sqrt(check_r) * ry;
                 }
-                
+
                 int sign = (largeArcFlag == sweepFlag ? -1 : 1);
 
                 float num = abs(pow(rx, 2) * pow(ry, 2) - pow(rx, 2) * pow(point1.Y, 2) - pow(ry, 2) * pow(point1.X, 2));
@@ -396,18 +398,19 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
                 {
                     deltAngle += 2.0f * M_PI;
                 }
-                else if(! sweepFlag && deltAngle > 0)
+                else if (!sweepFlag && deltAngle > 0)
                 {
                     deltAngle -= 2.0f * M_PI;
                 }
 
-                float startAngleDegrees = fmod((startAngle * 180.0f) / M_PI, 360.0f);
-                float deltAngleDegrees = fmod((deltAngle * 180.0f) / M_PI, 360.0f);
-                
-                pathToDraw.AddArc(center.X - rx, center.Y - ry, 2.0f * rx, 2.0f * ry, 
-                    startAngleDegrees,  deltAngleDegrees);
-                
+                float startAngleDegrees = fmod((long double)(startAngle * 180.0f) / M_PI, 360.0f);
+                float deltAngleDegrees = fmod((long double)(deltAngle * 180.0f) / M_PI, 360.0f);
+
+                pathToDraw.AddArc(center.X - rx, center.Y - ry, 2.0f * rx, 2.0f * ry,
+                    startAngleDegrees, deltAngleDegrees);
+
                 j += 7;
+
             }
             break;
         }
@@ -426,7 +429,122 @@ void ClassPath::Draw(Graphics& graphics, vector<Defs*>& defs)
 
     pathToDraw.SetFillMode(FillModeWinding);
     GraphicsState state = TransformSVG(graphics, transform);
-    graphics.FillPath(&pathBrush, &pathToDraw);
     graphics.DrawPath(&pathPen, &pathToDraw);
+    if (fill != "")
+    {
+        vector<RadialGradient*> vectorradial = defs[0]->getradial();
+        RadialGradient* radialGradient = nullptr;
+
+        for (RadialGradient* rad : vectorradial)
+        {
+            if (rad->getID() == fill)
+            {
+                radialGradient = rad;
+                break;
+            }
+        }
+        if (radialGradient != nullptr)
+        {
+            string xlink = radialGradient->getxlink();
+            if (xlink != "")
+            {
+                fill = xlink;
+
+            }
+            else
+            {
+                vector<Stop*> StopList = radialGradient->getStopList();
+                Color* colors = new Color[StopList.size()];
+
+                for (int i = 0; i < StopList.size(); ++i)
+                {
+                    colors[i] = Color(255 * StopList[i]->getstopOpacity(), StopList[i]->getstopColor_red(), StopList[i]->getstopColor_green(), StopList[i]->getstopColor_blue());
+                }
+                float* positions = new float[StopList.size()];
+
+                for (size_t i = 0; i < StopList.size(); ++i)
+                {
+                    positions[i] = StopList[i]->getoffset();
+                }
+                float cx = radialGradient->getcx();
+                float cy = radialGradient->getcy();
+                float r = radialGradient->getr();
+                float fx = radialGradient->getfx();
+                float fy = radialGradient->getfy();
+                Transform trans = radialGradient->gettransform();
+
+                LinearGradientBrush linGrBrush(PointF(cx - r, cy - r), PointF(cx + r, cy + r), colors[0], colors[StopList.size() - 1]);
+                Matrix matrix(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
+                linGrBrush.GetTransform(&matrix);
+                linGrBrush.SetWrapMode(WrapModeTileFlipXY);
+                graphics.FillPath(&linGrBrush, &pathToDraw);
+                delete[] positions;
+                delete[] colors;
+            }
+        }
+
+        vector<LinearGradient*> vectorlinear = defs[0]->getlinear();
+        LinearGradient* linearGradient = nullptr;
+
+
+        for (LinearGradient* lin : vectorlinear)
+        {
+            if (lin->getID() == fill)
+            {
+                linearGradient = lin;
+                break;
+            }
+        }
+
+        if (linearGradient != nullptr)
+        {
+            vector<Stop*> StopList = linearGradient->getStopList();
+            Color* colors = new Color[StopList.size()];
+
+            for (int i = 0; i < StopList.size(); ++i)
+            {
+                colors[i] = Color(255 * StopList[i]->getstopOpacity(), StopList[i]->getstopColor_red(), StopList[i]->getstopColor_green(), StopList[i]->getstopColor_blue());
+            }
+            float* positions = new float[StopList.size()];
+
+            for (size_t i = 0; i < StopList.size(); ++i)
+            {
+                positions[i] = StopList[i]->getoffset();
+            }
+
+            pointLinearGradient pointlineargradient = linearGradient->getPoint();
+
+            if (pointlineargradient.x2 == 0 && pointlineargradient.y2 == 0)
+            {
+                LinearGradientBrush gradientBrush(PointF(pointlineargradient.x1, pointlineargradient.y1),
+                    PointF(width_out, height_out),
+                    colors[0], colors[StopList.size() - 1]);
+                gradientBrush.SetInterpolationColors(colors, positions, StopList.size());
+                gradientBrush.SetWrapMode(WrapModeTileFlipXY);
+                gradientBrush.SetLinearColors(colors[0], colors[StopList.size() - 1]); //  default gradientUnits = userSpaceOnUse
+                gradientBrush.SetGammaCorrection(TRUE);
+                graphics.FillPath(&gradientBrush, &pathToDraw);
+            }
+            else
+            {
+                LinearGradientBrush gradientBrush(PointF(pointlineargradient.x1, pointlineargradient.y1),
+                    PointF(pointlineargradient.x2, pointlineargradient.y2),
+                    colors[0], colors[StopList.size() - 1]);
+                Transform trans = linearGradient->gettransform();
+                Matrix matrix(trans.scaleX, trans.skewX, trans.skewY, trans.scaleY, trans.translateX, trans.translateY);
+                gradientBrush.GetTransform(&matrix);
+                gradientBrush.SetInterpolationColors(colors, positions, StopList.size());
+                gradientBrush.SetLinearColors(colors[0], colors[StopList.size() - 1]); //  default gradientUnits = userSpaceOnUse
+                gradientBrush.SetGammaCorrection(TRUE);
+                graphics.FillPath(&gradientBrush, &pathToDraw);
+
+            }
+            delete[] colors;
+            delete[] positions;
+        }
+    }
+    else
+        graphics.FillPath(&pathBrush, &pathToDraw);
+
     graphics.Restore(state);
 }
